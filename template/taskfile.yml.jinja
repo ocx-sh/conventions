@@ -1,0 +1,53 @@
+# Seeded once by ocx-sh/conventions; this file belongs to the repo from here on.
+# The baseline tasks (setup, lock:check, secrets, baseline:check, release:prepare,
+# copier:update, ...) come from the template-owned taskfile below. Replace the
+# stub bodies with the repo's real commands; keep the task names (baseline:check
+# fails when one is missing) and keep every ci:* body exiting 0 until then.
+version: '3'
+
+includes:
+  baseline:
+    taskfile: ./taskfiles/baseline.taskfile.yml
+    flatten: true
+
+tasks:
+  verify:
+    desc: Full local gate, the same sequence CI runs
+    cmds:
+      - task: ci:lint
+{%- if profile == 'full' %}
+      - task: ci:test
+{%- endif %}
+{%- if profile == 'full' and bazel %}
+      - task: ci:build
+{%- endif %}
+{%- if profile == 'full' and site %}
+      - task: ci:docs
+{%- endif %}
+
+  ci:lint:
+    desc: Lint and format checks
+    cmds:
+      - echo "no lint yet - TODO wire the repo linters here"
+
+  ci:test:
+    desc: Tests (JUnit XML goes to target/reports/junit/)
+    cmds:
+      - mkdir -p target/reports/junit
+      - echo "no tests yet - TODO write JUnit XML to target/reports/junit/"
+
+  ci:build:
+    desc: Build
+    cmds:
+      - echo "no build yet - TODO wire the build here"
+
+  ci:docs:
+    desc: Docs site build and Lighthouse gate
+    cmds:
+      - echo "no site lighthouse gate yet - wire site:lighthouse here"
+
+  ci:deep:
+    desc: Deep tier (nightly verify-deep); JUnit XML goes to target/reports/junit/
+    cmds:
+      - mkdir -p target/reports/junit
+      - echo "no deep tests yet - TODO wire the slow tier here"

@@ -1,0 +1,32 @@
+# {{ repo_name }}
+
+TODO: one paragraph on what this repo is and who uses it.
+
+## Purpose
+
+TODO: purpose and scope of {{ repo_name }}.
+
+## Setup
+
+```sh
+ocx exec -- task setup
+```
+
+Pulls every tool from `ocx.toml`, installs the grim client directories and arms the git hooks. Re-running it is a no-op.
+
+## Verify
+
+```sh
+ocx exec -- task verify
+```
+
+The same gate CI runs. Replace the `ci:*` stubs in `taskfile.yml` with the repo's real commands.
+
+## Layout
+
+TODO: list the top-level directories and what lives in each.
+
+## Baseline
+
+This repo follows the [ocx-sh/conventions](https://github.com/ocx-sh/conventions) baseline, rendered by copier (`.copier-answers.yml`).
+Template-owned files (`taskfiles/baseline.taskfile.yml`, `.pre-commit-config.yaml`, `cliff.toml`, `renovate.json`, `CLAUDE.md`, `.github/workflows/verify-*.yml`{% if profile == 'full' and bazel %}, `bazel/baseline.bazelrc`{% endif %}, ...) must never be hand-edited: change ocx-sh/conventions, then run `ocx exec -- task copier:update`. `task baseline:check` fails on drift.
