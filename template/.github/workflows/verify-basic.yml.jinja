@@ -77,8 +77,9 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    # Reads the Bazel cache and OTEL secrets, so it runs in an environment.
-    environment: ci
+    # Reads the Bazel cache and OTEL secrets, so it runs in an environment. BAZEL_CACHE_WRITE_AUTH lives only in
+    # `ci-write` (deployment branches: the default branch); PR jobs get `ci`, which holds read-only credentials.
+    environment: {% raw %}${{ github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && 'ci-write' || 'ci' }}{% endraw %}
     permissions:
       contents: read
     steps:
@@ -88,7 +89,7 @@ jobs:
       - uses: {{ setup }}
         with:
           groups: default,build
-          # Cache writes only on push to main; fork PRs get empty secrets and run uncached.
+          # Cache writes only on push to the default branch (environment `ci-write`); fork PRs get empty secrets and run uncached.
           bazel-cache: {% raw %}${{ github.event_name == 'push' && 'write' || 'read' }}{% endraw %}
           cache-read-auth: {% raw %}${{ secrets.BAZEL_CACHE_READ_AUTH }}{% endraw %}
           cache-write-auth: {% raw %}${{ github.event_name == 'push' && secrets.BAZEL_CACHE_WRITE_AUTH || '' }}{% endraw %}

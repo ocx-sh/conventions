@@ -176,11 +176,11 @@ def http_calls(text):
 
 
 def names_tool(segments, tool):
-    """True when a URL path segment is the tool (`bazelisk`), or its release asset (`cmake-3.28.0-linux.tar.gz`, `go1.22.linux-amd64`).
+    """True when a URL path segment is the tool (`bazelisk`), or its release asset (`cmake-3.28.0-linux.tar.gz`, `task_linux_amd64.tar.gz`, `task-x86_64-unknown-linux-gnu`).
 
     Whole segments only: `bazel-skylib` and `task-runner` are other projects, not the `bazel` and `task` tools.
     """
-    pat = re.compile(rf"{re.escape(tool)}(?:[-_.]?v?\d.*|[-_](?:linux|darwin|macos|osx|windows|win)\b.*|\.(?:tar|zip|tgz|gz|exe)\b.*)?", re.I)
+    pat = re.compile(rf"{re.escape(tool)}(?:[-_.]?v?\d.*|[-_](?:linux|darwin|macos|osx|windows|win|x86_64|aarch64|arm64|amd64)(?![a-z]).*|\.(?:tar|zip|tgz|gz|exe)\b.*)?", re.I)
     return any(pat.fullmatch(seg) for seg in segments)
 
 

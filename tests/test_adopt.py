@@ -109,6 +109,20 @@ def test_pointer_only_claude_md_adds_nothing_to_existing_agents_md(adopt, dest):
     assert (dest / "AGENTS.md").read_text() == "mine\n", "C-024 a pointer-only CLAUDE.md must not be imported"
 
 
+@pytest.mark.parametrize("claude,agents", [
+    ("Use uv, never pip.\n", "Use uv, never pip.\n"),  # one real line is still real content
+    ("@AGENTS.md\nUse uv, never pip.\n", "Use uv, never pip.\n"),  # the pointer line is stripped: no self-import
+])
+def test_short_claude_md_content_survives_adoption(adopt, dest, claude, agents):
+    (dest / "CLAUDE.md").write_text(claude)
+    git(dest, "add", "-A")
+    git(dest, "commit", "-q", "-m", "short claude")
+    r = adopt()
+    assert r.returncode == 0, f"C-024 adopt must succeed: {r.stderr}"
+    assert (dest / "AGENTS.md").read_text() == agents, "C-024 a short CLAUDE.md must become AGENTS.md, not be overwritten by the pointer"
+    assert (dest / "CLAUDE.md").read_text().strip() == "@AGENTS.md", "C-024 CLAUDE.md must be the one-line pointer"
+
+
 def test_dirty_dest_refused_without_changes(adopt, dest):
     (dest / "scratch.txt").write_text("dirty\n")
     before = state(dest)

@@ -103,6 +103,10 @@ def fetch_repo(repo):
 
 
 def _fetch_repo(repo):
+    # A repo-scoped token gets 404 (not 403) for a private repo it cannot see; without this probe that reads as
+    # "no .copier-answers.yml" and the repo would be reported not-adopted.
+    if gh_strict("gh", "api", f"repos/{repo}", "--jq", ".full_name") is None:
+        raise Unreachable("repo not visible to the token (HTTP 404)")
     answers = contents(repo, ".copier-answers.yml")
     base = commit_of(answers)
     # Adopted repos call the conventions composite setup action, so its pins at the recorded _commit are authoritative;

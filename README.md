@@ -61,6 +61,7 @@ The task, workflow and preset interface adopters rely on is in [`docs/contract.m
 
 ## Owner acts
 
-- Renovate: create the Renovate GitHub App, install it on the fleet repos, set the `RENOVATE_APP_ID` and `RENOVATE_APP_KEY` secrets here.
+- Renovate: create the Renovate GitHub App, install it on the fleet repos, create an environment `renovate` here (deployment branches: `main` only) and set `RENOVATE_APP_ID` and `RENOVATE_APP_KEY` as its secrets, not as repo secrets.
+- Bazel adopters: keep `BAZEL_CACHE_WRITE_AUTH` only in an environment `ci-write` limited to the default branch; `ci` holds the read-only credential.
 - Pages: enable GitHub Pages (source: GitHub Actions) so `status.yml` can publish the drift status page.
 - Tag `v0.1.0` and push: adopters pin template and setup action by commit, and `release:prepare` never tags or pushes.

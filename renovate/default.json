@@ -9,6 +9,7 @@
     ":semanticCommits"
   ],
   "timezone": "UTC",
+  "minimumReleaseAge": "7 days",
   "schedule": [
     "before 6am on monday"
   ],
@@ -39,10 +40,10 @@
     {
       "customType": "regex",
       "description": [
-        "COPIER_VERSION / ZIZMOR_VERSION vars in the template-owned baseline taskfile (D-01)"
+        "COPIER_VERSION / ZIZMOR_VERSION vars in conventions' own template-owned baseline taskfile (D-01); adopted repos receive these pins via copier update, never a direct bump"
       ],
       "managerFilePatterns": [
-        "/(^|/)taskfiles/baseline\\.taskfile\\.yml$/"
+        "/^template/taskfiles/baseline\\.taskfile\\.yml$/"
       ],
       "matchStrings": [
         "(?<depName>COPIER|ZIZMOR)_VERSION: \"(?<currentValue>[^\"]+)\""

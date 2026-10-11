@@ -76,11 +76,15 @@ All: top-level `permissions: {}`, every `uses:` a 40-hex SHA with `# vX`, checko
 |---|---|---|
 | `lint` | setup (`groups: default,lint`) → `task ci:lint`, `task lock:check`, `task baseline:check`, `task secrets`, actionlint, zizmor | always |
 | `test` | setup (`default,test`) → `task ci:test`; JUnit to job summary + check annotations (fork-safe `annotate_only`) | full |
-| `build` | setup (`default,build`) → `task ci:build` | `bazel` |
+| `build` | setup (`default,build`) → `task ci:build`; environment `ci-write` on a push to the default branch, else `ci` | `bazel` |
 | `docs` | setup (`default,docs`) → `task ci:docs` | `site` |
 | `basic-gate` | `if: always()`; fails unless every needed job succeeded or was skipped by answer. The single required check. | always |
 
 The mirror profile renders `lint` and `basic-gate` only.
+
+Every job that reads a secret runs in an environment. `BAZEL_CACHE_WRITE_AUTH` exists only in the
+`ci-write` environment (deployment branches limited to the default branch); `ci` holds the read-only
+cache credential and `OTEL_AUTH`, and is what PR jobs receive.
 
 **`verify-deep.yml`** (full) — triggers `schedule` (daily 03:MM UTC, `MM = int(sha256(repo_name)[:4], 16) % 60`),
 `workflow_dispatch`, `workflow_call`, and `pull_request: types: [labeled]` gated on label `run-deep`.
@@ -90,7 +94,8 @@ the next green scheduled run closes it.
 
 **`claude.yml`** (full) — PR review on `pull_request` (opened, synchronize, ready_for_review) plus an
 `@claude` responder; secret `CLAUDE_CODE_OAUTH_TOKEN`. Every job skips (green) when the secret is
-empty or the PR is from a fork.
+empty or the PR is from a fork. The responder passes `github_token: ${{ github.token }}` (no OIDC exchange for the
+write-capable Claude App token) and an explicit `--allowedTools` allowlist (`gh pr view|diff|comment`, inline comment).
 
 **`deploy-site.yml`** (when `site.deploy`) — triggers `push: main` (site paths) and `workflow_dispatch`
 only, environment `ocx.sh`, uses the pinned `ocx-sh/website/.github/actions/deploy` with inputs
@@ -138,13 +143,13 @@ Rendered `renovate.json` extends `github>ocx-sh/conventions//renovate/default#<t
 `…//renovate/mirror#<tag>`).
 
 - `default`: `config:recommended`, weekly schedule, semantic commits (`ci(deps)` / `chore(deps)`),
-  `helpers:pinGitHubActionDigests`, `ocx-sh/conventions` action refs ignored (they move with copier),
+  `helpers:pinGitHubActionDigests`, `minimumReleaseAge: "7 days"`, `ocx-sh/conventions` action refs ignored (they move with copier),
   copier manager on, `ocx.toml` regex manager (datasource `docker`, versioning
   `regex:^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)$`, `postUpgradeTasks: ["ocx lock"]`),
   `bazel-module` manager for `rules_ocx` (`postUpgradeTasks: ["bazel mod deps"]`), pypi regex manager
-  for `COPIER_VERSION` / `ZIZMOR_VERSION`, and the `ocx-sh/website` deploy action grouped with `@ocx-sh/theme`.
+  for `COPIER_VERSION` / `ZIZMOR_VERSION` (matches only `template/taskfiles/baseline.taskfile.yml` in conventions itself; adopted repos get new pins through `copier update`), and the `ocx-sh/website` deploy action grouped with `@ocx-sh/theme`.
 - `mirror`: `default` minus the npm and Bazel groups.
 
 Renovate runs self-hosted from `ocx-sh/conventions` (`renovate.yml`, schedule + dispatch, GitHub App
-token, `RENOVATE_REPOSITORIES` = adopted repos in `fleet.toml`); remove an adopted repo from the hosted
+token, `RENOVATE_REPOSITORIES` = adopted repos in `fleet.toml`; the job runs in environment `renovate`, which holds `RENOVATE_APP_ID` / `RENOVATE_APP_KEY`); remove an adopted repo from the hosted
 Renovate app so PRs do not double.

@@ -155,7 +155,8 @@ def online(tmp_path, fleet, rules):
     d = tmp_path / "stubs"
     d.mkdir()
     (d / "stub.py").write_text(STUB_PY)
-    (d / "map.json").write_text(json.dumps(rules))
+    probes = [{"match": [f"repos/ocx-sh/{k} --jq"], "out": f"ocx-sh/{k}"} for k in re.findall(r"^\[repos\.(\w+)\]", fleet, re.M)]
+    (d / "map.json").write_text(json.dumps(rules + probes))  # a test's own rules come first and win
     log = d / "log"
     for tool in ("gh", "ocx"):
         write_stub(d / "bin", tool, f'exec {sys.executable} {d / "stub.py"} "$0" "$@"\n')
@@ -189,6 +190,15 @@ def test_online_404_is_not_adopted_but_403_is_unreachable(tmp_path):
     flags = rows["locked"]["flags"]
     assert [f["class"] for f in flags] == ["unreachable"] and "403" in flags[0]["detail"]
     assert rows["locked"]["adopted"] is False
+
+
+def test_online_private_repo_404_on_the_repo_itself_is_unreachable_not_not_adopted(tmp_path):
+    # Repo-scoped tokens get 404 for repos they cannot see, so every contents call 404s as well.
+    rules = [{"match": ["repos/ocx-sh/hidden --jq"], "rc": 1, "err": NOT_FOUND}, *BASE]
+    rows, _ = online(tmp_path, fleet_of("hidden"), rules)
+    flags = rows["hidden"]["flags"]
+    assert [f["class"] for f in flags] == ["unreachable"] and "404" in flags[0]["detail"], flags
+    assert rows["hidden"]["adopted"] is False
 
 
 def test_online_pending_updates_counts_renovate_head_branches_only(tmp_path):

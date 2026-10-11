@@ -353,6 +353,24 @@ def test_c007_commit_msg_hook_enforces_conventional_subject(rendered, tmp_path, 
         assert all(t in out for t in TYPES), f"C-007: rejection must name the allowed types {TYPES}\n{out[-400:]}"
 
 
+def test_c007_commit_msg_hook_accepts_message_path_with_spaces(rendered, tmp_path):
+    repo = rendered("full-minimal")
+    _, hooks = prek_hooks(repo)
+    cm = [h for h in hooks if "commit-msg" in h.get("stages", [])]
+    ocx_lock_committed(repo)
+    msg = tmp_path / "with space" / "COMMIT_EDITMSG"
+    msg.parent.mkdir()
+    msg.write_text("feat: y\n")  # an unreadable file reads as an empty subject, which the hook rejects
+    r = run([*hook_argv(cm[0]), msg], repo, git_env_dict(), check=False, timeout=120)
+    assert r.returncode == 0, f"C-007: a message path with spaces must be read, rc={r.returncode}\n{(r.stdout + r.stderr)[-400:]}"
+
+
+def test_c009_workflows_lint_scans_whole_github_dir(rendered):
+    text = need("C-009", rendered("full-minimal"), "taskfiles/baseline.taskfile.yml").read_text()
+    line = next(ln for ln in text.splitlines() if "zizmor --" in ln)
+    assert line.rstrip().endswith(" .github") and "--no-online-audits" in line, f"C-009: zizmor must scan .github (workflows and actions), offline: {line!r}"
+
+
 @pytest.mark.parametrize("name", ALL)
 def test_c008_gitleaks_config(rendered, name):
     cfg = load_toml("C-008", rendered(name), ".gitleaks.toml")
@@ -497,6 +515,39 @@ def test_c013_claude_workflow(rendered, name):
         "C-013: review job claude_args must allow the PR comment tools"
 
 
+def test_c013_responder_is_least_privilege(rendered):
+    job = yaml.safe_load(need("C-013", rendered("full-minimal"), ".github/workflows/claude.yml").read_text())["jobs"]["respond"]
+    action = [s for s in steps(job) if "claude-code-action" in str(s.get("uses", ""))][0]["with"]
+    assert action.get("github_token") == "${{ github.token }}", "C-013: responder must pass the job token, not exchange OIDC for the write-capable App token"
+    args = action.get("claude_args", "")
+    assert "--allowedTools" in args and "gh pr comment" in args and "Bash(gh pr view" in args and "create_inline_comment" in args, \
+        "C-013: responder needs an explicit read-only/comment --allowedTools allowlist"
+    assert "id-token" not in job["permissions"], "C-013: responder with an explicit token needs no id-token: write"
+
+
+def test_c009_bazel_write_credential_only_in_default_branch_environment(rendered):
+    raw = need("C-009", rendered("full-bazel-site"), ".github/workflows/verify-basic.yml").read_text()
+    build = yaml.safe_load(raw)["jobs"]["build"]
+    env = build["environment"]
+    assert "'ci-write'" in env and "'ci'" in env and "default_branch" in env and "github.event_name == 'push'" in env, \
+        f"C-009: build must pick environment ci-write only for a push to the default branch, else ci: {env!r}"
+    write = [s for s in steps(build) if "BAZEL_CACHE_WRITE_AUTH" in yaml.safe_dump(s)]
+    assert write and all("github.event_name == 'push'" in yaml.safe_dump(s) for s in write), "C-009: the write credential is only passed on push"
+    for fname, text in all_workflows(rendered("full-bazel-site")):
+        for jname, job in (yaml.safe_load(text).get("jobs") or {}).items():
+            if "BAZEL_CACHE_WRITE_AUTH" in yaml.safe_dump(job):
+                assert "ci-write" in str(job.get("environment")), f"C-009: {fname} job {jname} reads BAZEL_CACHE_WRITE_AUTH outside ci-write"
+
+
+def test_checkout_pin_is_uniform(rendered):
+    pins = set()
+    for name in ("full-bazel-site", "mirror"):
+        for _, text in all_workflows(rendered(name)):
+            pins |= set(re.findall(r"actions/checkout@(\S+ # v\S+)", text))
+    pins |= set(re.findall(r"actions/checkout@(\S+ # v\S+)", "".join(p.read_text() for p in (REPO_ROOT / ".github" / "workflows").glob("*.yml"))))
+    assert pins == {"3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1"}, f"template and repo workflows must share one actions/checkout pin: {pins}"
+
+
 def expected_setup_sha(repo):
     """D-02: workflows pin the setup action at copier's `_copier_conf.vcs_ref_hash`.
 
@@ -582,6 +633,20 @@ def test_c012_http_archive_of_a_lookalike_is_not_an_ocx_tool(render):
     r = run([sys.executable, REPO_ROOT / "scripts" / "baseline_check.py", "--template", REPO_ROOT, "--repo", repo, "--commit-unresolved"],
             repo, git_env_dict(), check=False, timeout=300)
     assert "C-012" not in r.stdout + r.stderr, f"C-012: a lookalike http_archive must not name an ocx tool\n{(r.stdout + r.stderr)[-600:]}"
+
+
+@pytest.mark.parametrize("segment,named", [
+    ("task_linux_amd64.tar.gz", True), ("task_darwin_arm64.tar.gz", True), ("task_amd64_linux.tar.gz", True),
+    ("task-x86_64-unknown-linux-gnu.tar.gz", True), ("task-aarch64.zip", True), ("task_windows_amd64.zip", True),
+    ("task-runner-1.0.tar.gz", False), ("task-linuxish.tar.gz", False), ("bazel-skylib-1.5.0.tar.gz", False),
+])
+def test_c012_names_tool_matches_os_and_arch_suffixed_assets(segment, named):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("baseline_check", REPO_ROOT / "scripts" / "baseline_check.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    tool = "bazel" if segment.startswith("bazel") else "task"
+    assert mod.names_tool(["example.com", "x", segment], tool) is named, f"C-012: names_tool({segment!r}, {tool!r}) should be {named}"
 
 
 # ---------------------------------------------------------------- C-023
