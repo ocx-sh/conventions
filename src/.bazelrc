@@ -1,0 +1,5 @@
+# Seeded once by ocx-sh/conventions; the repo owns it afterwards.
+import %workspace%/bazel/baseline.bazelrc
+try-import %workspace%/.bazelrc.user
+
+# TODO: repo-specific flags below.

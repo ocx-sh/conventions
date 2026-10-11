@@ -40,10 +40,10 @@
     {
       "customType": "regex",
       "description": [
-        "COPIER_VERSION / ZIZMOR_VERSION vars in conventions' own template-owned baseline taskfile (D-01); adopted repos receive these pins via copier update, never a direct bump"
+        "COPIER_VERSION / ZIZMOR_VERSION vars in conventions' own baseline taskfile, src/ and its generated template/ copy bumped together (D-01); adopted repos receive these pins via copier update, never a direct bump"
       ],
       "managerFilePatterns": [
-        "/^template/taskfiles/baseline\\.taskfile\\.yml$/"
+        "/^(src|template)/taskfiles/baseline\\.taskfile\\.yml$/"
       ],
       "matchStrings": [
         "(?<depName>COPIER|ZIZMOR)_VERSION: \"(?<currentValue>[^\"]+)\""

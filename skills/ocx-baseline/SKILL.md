@@ -24,7 +24,7 @@ Pick the mode by whether `.copier-answers.yml` exists: absent -> **adopt**; pres
 
 ## modernize
 
-1. `task copier:update -- --vcs-ref <latest tag>` (latest: `gh release list -R ocx-sh/conventions` or `git ls-remote --tags`). Resolve conflicts in seeded-once files by hand; never in template-owned ones - rerun the update.
+1. `task copier:update -- --vcs-ref <latest tag>` (latest: `gh release list -R ocx-sh/conventions` or `git ls-remote --tags`). Resolve conflicts in seeded-once files by hand; never in template-owned ones - rerun the update. Then `python3 $CONV/scripts/untrack_grim.py` untracks grim client output; move each repo-owned skill or rule it lists to `agent-config/` and `grim add` it.
 2. Read `CHANGELOG.md` of `ocx-sh/conventions` for every version crossed; tell the user what each version changed and why, in one line each.
 3. Add the conventions grim bundle to `grimoire.toml` when the owner has published it and it is missing (status flag `bundle-missing`); then `task setup`, `task lock:check`, `task verify`.
 

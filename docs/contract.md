@@ -25,7 +25,7 @@ The template uses no `_tasks`, `_migrations` or `_jinja_extensions`: `--trust` i
 | `setup` | `ocx pull` all groups, `grim install`, then `hooks:install`. Idempotent (`status:`-guarded). |
 | `hooks:install` | `prek install` for `pre-commit` and `commit-msg`. Idempotent. |
 | `lock:check` | `ocx lock --check` plus `grim:check`. |
-| `grim:check` | Fails when a `grimoire.toml` entry is missing from `grimoire.lock`, when installed files differ from the locked digest, or when `clients` lacks claude/codex/opencode. A newer upstream digest for a floating tag is not a failure. |
+| `grim:check` | Runs `grim install`, which fails when `grimoire.lock` is missing or stale against `grimoire.toml`; fails when the committed grim-written `.claude/settings.json` / `opencode.json` differ from the lock, or when `clients` lacks claude/codex/opencode. A newer upstream digest for a floating tag is not a failure. Installed skills and rules are gitignored output (a template-owned `.gitignore` in each client dir), never committed. |
 | `secrets` | gitleaks over the repo; exit 1 on a finding. |
 | `baseline:check` | Re-renders the recorded `_commit` with the recorded answers into a temp dir and diffs the template-owned paths; also checks the ocx.toml, grimoire.toml, root-task, Bazel and pnpm rules below. |
 | `release:prepare` | See below. |

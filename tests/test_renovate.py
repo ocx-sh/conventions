@@ -189,8 +189,9 @@ def test_copier_zizmor_manager_extracts_real_taskfile(path):
     m = next((m for m in managers(cfg) if "COPIER_VERSION" in json.dumps(m)), None)
     assert m, "C-015/D-01 regex manager for COPIER_VERSION/ZIZMOR_VERSION required"
     hit = lambda rel: any(re.search(pat.strip("/"), rel) for pat in m["managerFilePatterns"])
-    assert hit("template/taskfiles/baseline.taskfile.yml"), "C-015 manager must target conventions' own template taskfile"
-    for rel in ("taskfiles/baseline.taskfile.yml", "sub/taskfiles/baseline.taskfile.yml", "x/template/taskfiles/baseline.taskfile.yml"):
+    for rel in ("src/taskfiles/baseline.taskfile.yml", "template/taskfiles/baseline.taskfile.yml"):
+        assert hit(rel), f"C-015 manager must bump {rel} (both, or template:check fails on the Renovate PR)"
+    for rel in ("taskfiles/baseline.taskfile.yml", "sub/taskfiles/baseline.taskfile.yml", "x/template/taskfiles/baseline.taskfile.yml", "x/src/taskfiles/baseline.taskfile.yml"):
         assert not hit(rel), f"C-015 adopted repos get these pins via copier update; manager must not target {rel}"
     tf = REPO_ROOT / "template" / "taskfiles" / "baseline.taskfile.yml"
     want = yaml.safe_load(tf.read_text())["vars"]

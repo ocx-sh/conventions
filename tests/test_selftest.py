@@ -151,7 +151,7 @@ def test_c022_copier_update_n_to_n1_matches_golden(tmp_path):
     changed = set(run(["git", "diff", "--name-only"], repo, env).stdout.split())
     changed |= set(run(["git", "ls-files", "--others", "--exclude-standard"], repo, env).stdout.split())
     # Files that embed the template commit (D-02 setup pin, C-015 preset ref) move with every update.
-    ref_pinned = {".github/workflows/verify-basic.yml", ".github/workflows/verify-deep.yml",
+    ref_pinned = {".github/workflows/verify-basic.yml", ".github/workflows/verify-deep.yml", ".github/workflows/claude.yml",
                   ".github/workflows/deploy-site.yml", "renovate.json"}
     assert BASELINE_TASKFILE in changed and ".copier-answers.yml" in changed, f"C-022: update must touch the sentinel file and .copier-answers.yml, got {sorted(changed)}"
     extra = changed - {BASELINE_TASKFILE, ".copier-answers.yml"} - ref_pinned

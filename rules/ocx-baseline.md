@@ -27,9 +27,9 @@ Change `ocx-sh/conventions`, release a tag, then run `task copier:update` (copie
 
 | Class | Files |
 |---|---|
-| template-owned | `taskfiles/baseline.taskfile.yml`, `.pre-commit-config.yaml`, `cliff.toml`, `renovate.json`, `CLAUDE.md`, `.github/zizmor.yml`, `.github/workflows/{verify-basic,verify-deep,claude,deploy-site}.yml`, `bazel/baseline.bazelrc` |
+| template-owned | `taskfiles/baseline.taskfile.yml`, `.pre-commit-config.yaml`, `cliff.toml`, `renovate.json`, `CLAUDE.md`, `.github/zizmor.yml`, `.github/workflows/{verify-basic,verify-deep,claude,deploy-site}.yml`, `bazel/baseline.bazelrc`, `.gitignore` in `.claude/{skills,rules}`, `.opencode/{skills,rules}`, `.agents/skills` - each starts with an `ocx-baseline: template-owned file` banner |
 | seeded-once | `taskfile.yml`, `ocx.toml`, `grimoire.toml`, `AGENTS.md`, `.gitleaks.toml`, `.bazelrc`, `MODULE.bazel` - repo-owned after the first copy |
-| repo-owned | everything else |
+| repo-owned | everything else; repo-owned skills and rules live in `agent-config/` as grim path sources, never in the gitignored client dirs |
 
 ## Target state
 

@@ -1,4 +1,5 @@
 {%- set ver = ((_copier_conf.vcs_ref or '') | regex_search('^v\\d[^\\s]*')) or 'v0' -%}
+# ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update
 name: Deploy to ocx.sh
 
 # Publishes the site on push to main that touches the site, plus a manual dispatch. No pull_request trigger: PR

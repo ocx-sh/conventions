@@ -24,7 +24,7 @@ The same gate CI runs. `ci:lint`, `ci:test` and `ci:deep` run the pytest self-te
 
 ## Layout
 
-- `template/`, `copier.yml`, `MANIFEST.toml`: the template and its ownership classes
+- `src/`, `copier.yml`, `MANIFEST.toml`: the template sources and ownership classes; `template/` is generated (`task template:build`), never edited
 - `renovate/`, `.github/actions/setup`: shared presets and the setup action
 - `drift/`, `fleet.toml`, `scripts/`: fleet tracking, `adopt.sh`, `baseline_check.py`
 - `skills/`, `rules/`: grim-published AI config

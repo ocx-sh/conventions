@@ -26,9 +26,40 @@ tasks:
       - task: ci:test
 
   ci:lint:
-    desc: Byte-compile the Python sources (the repo's lint)
+    desc: Byte-compile the Python sources, check template/ is built from src/, lint every fixture's rendered workflows
     cmds:
       - ocx exec -g lint -- uv run python -m compileall -q scripts drift tests
+      - task: template:check
+      - task: template:lint
+
+  template:build:
+    desc: Generate template/ (what copier reads) from src/ and MANIFEST.toml
+    cmds:
+      - ocx exec -g lint -- uv run python scripts/build_template.py
+
+  template:check:
+    desc: Fail when the committed template/ is not what src/ and MANIFEST.toml build
+    cmds:
+      - cmd: |
+          tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+          ocx exec -g lint -- uv run python scripts/build_template.py "$tmp/template"
+          if ! diff -r "$tmp/template" template; then
+            echo "template:check: template/ is stale or hand-edited — edit src/, then run task template:build" >&2
+            exit 1
+          fi
+
+  template:lint:
+    desc: Render every fixture and lint its workflows (actionlint + zizmor)
+    cmds:
+      - cmd: |
+          tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+          for a in tests/fixtures/answers/full-*.yml tests/fixtures/answers/mirror.yml; do
+            out="$tmp/$(basename "$a" .yml)"
+            ocx exec -g lint -- uv run copier copy --defaults --quiet --vcs-ref HEAD --data-file "$a" . "$out"
+            git -C "$out" init -q
+            ocx exec -g lint -- sh -c 'cd "$1" && actionlint && uvx --from "zizmor==$2" zizmor --no-online-audits --config .github/zizmor.yml .github' _ "$out" "{{.ZIZMOR_VERSION}}" \
+              || { echo "template:lint: $(basename "$a") renders workflows that fail lint" >&2; exit 1; }
+          done
 
   ci:test:
     desc: Fast self-tests (JUnit XML goes to target/reports/junit/)

@@ -5,10 +5,6 @@ __pycache__/
 .pytest_cache/
 *.pyc
 
-# grim-installed client files: dependencies pinned by grimoire.lock, not sources (D-05).
-# `task grim:check` re-materialises them with `grim install`, so a fresh clone passes.
-.claude/
-.codex/
-.opencode/
-opencode.json
-.agents/skills/
+# grim-installed files outside the template's per-client-dir .gitignore files (D-05).
+/.claude/settings.json
+/opencode.json
