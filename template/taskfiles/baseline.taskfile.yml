@@ -55,7 +55,12 @@ tasks:
       # `grim install` refuses (exit 65) a grimoire.lock whose declaration hash no longer matches
       # grimoire.toml, and a client file modified since install. A floating tag with a newer
       # upstream digest is not a failure: install only materialises what the lock records.
-      - ocx exec -g lint -- grim install
+      - cmd: |
+          if [ ! -f grimoire.lock ] && grep -q '^profile: mirror' .copier-answers.yml; then
+            echo "grim:check: no grimoire.lock yet (mirror profile) - task setup creates it; skipping install"
+            exit 0
+          fi
+          ocx exec -g lint -- grim install
       - cmd: |
           if ! git diff --exit-code -- .claude .codex .opencode .agents; then
             echo "grim:check: installed client files differ from grimoire.lock — run task setup and commit the result" >&2
