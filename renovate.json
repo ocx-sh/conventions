@@ -1,1 +1,1 @@
-{"$schema": "https://docs.renovatebot.com/renovate-schema.json", "extends": ["github>ocx-sh/conventions//renovate/default#b987c09e6b488bb22d2688eaaffdabfdf607f2d4"]}
+{"$schema": "https://docs.renovatebot.com/renovate-schema.json", "extends": ["github>ocx-sh/conventions//renovate/default#50fcd49287c0ff7a26764515f18f07f789ce35c6"]}
