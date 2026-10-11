@@ -10,6 +10,8 @@ uv = "ocx.sh/astral-sh/uv:0.13.0"
 
 # Empty on purpose: CI's test job installs `default,test` and ocx rejects an undeclared group.
 [group.test.tools]
+# uv again under its own group: the CI test job pulls only default,test.
+uv = "ocx.sh/astral-sh/uv:0.13.0"
 
 # bazelisk runs the Renovate runner's `bazel mod deps` postUpgradeTask
 [group.build.tools]
