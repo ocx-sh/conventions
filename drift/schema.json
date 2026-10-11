@@ -39,7 +39,8 @@
                     "pending-updates",
                     "nightly-red",
                     "bundle-missing",
-                    "grim-pending"
+                    "grim-pending",
+                    "unreachable"
                   ]
                 },
                 "detail": {"type": "string"}

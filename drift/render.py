@@ -63,6 +63,7 @@ def main():
     ap.add_argument("-o", "--out", "--output", dest="out", type=Path, required=True, help="index.html to write")
     args = ap.parse_args()
     data = json.loads(args.status.read_text(encoding="utf-8"))
+    args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(render(data), encoding="utf-8")
 
 

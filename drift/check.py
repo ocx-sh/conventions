@@ -31,17 +31,37 @@ def older(a, b):
 
 # ---- remote facts -------------------------------------------------------------------------
 
-def gh(*args):
-    """stdout of a command or None on any failure; never raises."""
+class Unreachable(Exception):
+    """A repo fact could not be fetched for a reason other than 'absent' (403, rate limit, network)."""
+
+
+def run(*args):
+    """-> (returncode, stdout, stderr); a missing binary or timeout is (-1, '', reason). Never raises."""
     try:
-        r = subprocess.run(args, capture_output=True, text=True, timeout=60)
-    except (OSError, subprocess.SubprocessError):
+        r = subprocess.run(args, capture_output=True, text=True, timeout=60, check=False)
+    except (OSError, subprocess.SubprocessError) as e:
+        return -1, "", repr(e)
+    return r.returncode, r.stdout.strip(), r.stderr.strip()
+
+
+def gh(*args):
+    """stdout of a command or None on any failure; never raises. For facts whose absence is not a repo problem."""
+    rc, out, _ = run(*args)
+    return out if rc == 0 else None
+
+
+def gh_strict(*args):
+    """stdout, or None on HTTP 404 (absent); raises Unreachable on any other failure (403, rate limit, network)."""
+    rc, out, err = run(*args)
+    if rc == 0:
+        return out
+    if "HTTP 404" in err:
         return None
-    return r.stdout.strip() if r.returncode == 0 else None
+    raise Unreachable(((err.splitlines() or [f"exit {rc}"])[-1])[:200])
 
 
 def contents(repo, path):
-    out = gh("gh", "api", f"repos/{repo}/contents/{path}", "--jq", ".content")
+    out = gh_strict("gh", "api", f"repos/{repo}/contents/{path}", "--jq", ".content")
     try:
         return base64.b64decode(out).decode() if out else None
     except ValueError:
@@ -49,27 +69,59 @@ def contents(repo, path):
 
 
 def workflows(repo):
-    names = (gh("gh", "api", f"repos/{repo}/contents/.github/workflows", "--jq", ".[].name") or "").split()
+    names = (gh_strict("gh", "api", f"repos/{repo}/contents/.github/workflows", "--jq", ".[].name") or "").split()
     return "\n".join(contents(repo, f".github/workflows/{n}") or "" for n in names if n.endswith((".yml", ".yaml")))
 
 
+def commit_of(answers):
+    m = re.search(r"^_commit:\s*[\"']?(\S+?)[\"']?\s*$", answers or "", re.M)
+    return m.group(1) if m else None
+
+
+def scrape(text):
+    """-> (setup-ocx version, ocx CLI version) from workflow or composite-action text; None when absent."""
+    ref = (re.search(r"ocx-sh/setup-ocx@\S+[ \t]+#\s*(v?\d+\.\d+\.\d+)", text)  # comment after uses:
+           or re.search(r"#\s*(v?\d+\.\d+\.\d+)[ \t]*\n\s*uses:\s*ocx-sh/setup-ocx@", text)  # comment above uses:
+           or re.search(r"ocx-sh/setup-ocx@(v\d+\.\d+\.\d+)", text))
+    cli = re.search(r"\bversion:\s*[\"']?(\d+\.\d+\.\d+)[\"']?", text) if "setup-ocx" in text else None
+    return ref and ref.group(1), cli and cli.group(1)
+
+
+def renovate_prs(repo):
+    out = gh_strict("gh", "pr", "list", "-R", repo, "--state", "open", "--limit", "200", "--json", "headRefName")
+    try:
+        return sum(str(p["headRefName"]).startswith("renovate/") for p in json.loads(out or "[]"))
+    except (ValueError, TypeError, KeyError):
+        raise Unreachable("unparseable PR list") from None
+
+
 def fetch_repo(repo):
-    wf = workflows(repo)
-    # ponytail: setup-ocx ref and ocx CLI version are regex-scraped from workflows; null when absent (never flags)
-    ref = re.search(r"ocx-sh/setup-ocx@\S+\s+#\s*(v?\d+\.\d+\.\d+)", wf) or re.search(r"ocx-sh/setup-ocx@(v\d+\.\d+\.\d+)", wf)
-    cli = re.search(r"\bversion:\s*[\"']?(\d+\.\d+\.\d+)[\"']?", wf) if "setup-ocx" in wf else None
-    prs = gh("gh", "pr", "list", "-R", repo, "--author", "app/renovate", "--state", "open", "--json", "number", "--jq", "length")
-    run = gh("gh", "run", "list", "-R", repo, "--workflow", "verify-deep.yml", "--event", "schedule", "--limit", "1",
-             "--json", "conclusion", "--jq", ".[0].conclusion")
+    try:
+        return _fetch_repo(repo)
+    except Unreachable as e:
+        return {"unreachable": str(e)}
+
+
+def _fetch_repo(repo):
+    answers = contents(repo, ".copier-answers.yml")
+    base = commit_of(answers)
+    # Adopted repos call the conventions composite setup action, so its pins at the recorded _commit are authoritative;
+    # workflow text is the fallback (non-adopted repos, or a tag that no longer resolves).
+    action = contents(CONVENTIONS, f".github/actions/setup/action.yml?ref={base}") if base else None
+    a, w = scrape(action or ""), scrape(workflows(repo))
+    run_ = gh("gh", "run", "list", "-R", repo, "--workflow", "verify-deep.yml", "--event", "schedule", "--limit", "1",
+              "--json", "conclusion", "--jq", ".[0].conclusion")
     return {
-        "answers": contents(repo, ".copier-answers.yml"),
+        "answers": answers,
         "ocx_toml": contents(repo, "ocx.toml"),
         "grimoire_toml": contents(repo, "grimoire.toml"),
-        "setup_ocx_ref": ref and ref.group(1),
-        "ocx_cli": cli and cli.group(1),
-        "renovate_prs": int(prs) if prs and prs.isdigit() else 0,
-        "nightly": run or None,
-        # ponytail: needs a lock-vs-registry digest comparison; not derivable from gh api, so never flags online
+        "setup_ocx_ref": a[0] or w[0],
+        "ocx_cli": a[1] or w[1],
+        "renovate_prs": renovate_prs(repo),
+        "nightly": run_ or None,
+        # ponytail: never flags online. Upgrade path: install grim on the status runner, write the repo's
+        # grimoire.toml + grimoire.lock to a temp dir, run `grim --format json status --check --config <toml>`
+        # and flag any item whose `update_available` is non-null.
         "grim_floating_pending": False,
     }
 
@@ -84,9 +136,10 @@ def fetch_remote(fleet):
     for key, r in fleet.items():
         if not r["excluded"] and "*" not in r["repo"]:  # ponytail: mirror-* globs are not enumerated; rollout is iteration 3
             repos[key] = fetch_repo(r["repo"])
-    pkgs = {m.group(1) for f in repos.values() for m in map(REF.match, ref_strings(f["ocx_toml"])) if m}
+    pkgs = {m.group(1) for f in repos.values() for m in map(REF.match, ref_strings(f.get("ocx_toml"))) if m}
     index = {}
     for p in sorted(pkgs):
+        gh("ocx", "index", "update", p)  # the runner's local index starts empty; a failed refresh just leaves it stale
         out = gh("ocx", "--format", "json", "index", "list", p)
         try:
             vs = [v for v in json.loads(out)[p] if re.fullmatch(r"\d+\.\d+\.\d+", v)]
@@ -141,10 +194,11 @@ def present_bundles(text):
 
 def classify(r, rf, remote):
     """-> (baseline_version, [(class, detail)]) for one adopted-or-not, non-excluded repo."""
+    if rf.get("unreachable"):
+        return None, [("unreachable", rf["unreachable"])]
     if not rf.get("answers"):
         return None, [("not-adopted", "no .copier-answers.yml on the default branch")]
-    m = re.search(r"^_commit:\s*[\"']?(\S+?)[\"']?\s*$", rf["answers"], re.M)
-    base = m.group(1) if m else None
+    base = commit_of(rf["answers"])
     latest = remote["latest_version"]
     flags = []
     if base != latest and not (vt(base) and vt(latest) and vt(base) >= vt(latest)):
