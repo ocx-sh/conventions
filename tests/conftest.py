@@ -26,7 +26,8 @@ GIT_ISOLATION = {
 
 
 def git_env_dict() -> dict:
-    return {**os.environ, **GIT_ISOLATION}
+    # OCX_GLOBAL=1 comes from the global ocx shim a bare `uv` resolves to under `task`; it makes a nested `ocx lock` ignore the repo
+    return {**{k: v for k, v in os.environ.items() if k != "OCX_GLOBAL"}, **GIT_ISOLATION}
 
 
 def run(cmd, cwd, env=None, check=True, timeout=900):
