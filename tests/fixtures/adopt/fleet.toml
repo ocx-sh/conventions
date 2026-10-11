@@ -1,0 +1,12 @@
+schema = 1
+
+[repos.demo]
+repo = "ocx-sh/demo"
+path = "demo"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.demo.answers]
+repo_name = "demo"
+profile = "full"

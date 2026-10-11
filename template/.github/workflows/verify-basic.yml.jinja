@@ -1,0 +1,122 @@
+{%- set ver = ((_copier_conf.vcs_ref or '') | regex_search('^v\\d[^\\s]*')) or 'v0' -%}
+{%- set setup = 'ocx-sh/conventions/.github/actions/setup@' ~ _copier_conf.vcs_ref_hash ~ ' # ' ~ ver -%}
+{%- set full = profile == 'full' -%}
+{%- set has_bazel = full and bazel -%}
+{%- set has_site = full and site -%}
+# ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update
+name: verify-basic
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: verify-basic-{% raw %}${{ github.event.pull_request.number || github.ref }}{% endraw %}
+  cancel-in-progress: {% raw %}${{ github.event_name == 'pull_request' }}{% endraw %}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # `task secrets` (gitleaks git) scans the full history
+      - uses: {{ setup }}
+        with:
+          groups: default,lint
+      - run: task ci:lint
+      - run: task lock:check
+      - run: task baseline:check
+      - run: task secrets
+      - run: |
+          # actionlint + zizmor, both pinned in taskfiles/baseline.taskfile.yml
+          task workflows:lint
+{%- if full %}
+
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: {{ setup }}
+        with:
+          groups: default,test
+          otel-auth: {% raw %}${{ secrets.OTEL_OTLP_AUTH }}{% endraw %}
+      - run: task ci:test
+      - name: Push JUnit telemetry
+        if: always()
+        uses: {{ setup }}
+        with:
+          report: target/reports/junit/*.xml
+          otel-auth: {% raw %}${{ secrets.OTEL_OTLP_AUTH }}{% endraw %}
+      - name: Publish JUnit report
+        if: always()
+        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d # v6.6.1
+        with:
+          report_paths: target/reports/junit/*.xml
+          require_tests: false
+          # Fork PR tokens cannot write checks: annotate only.
+          annotate_only: {% raw %}${{ github.event.pull_request.head.repo.fork == true }}{% endraw %}
+{%- endif %}
+{%- if has_bazel %}
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: {{ setup }}
+        with:
+          groups: default,build
+          # Org secrets. Cache writes only on a push to main (read credential everywhere else); fork PRs see
+          # empty secrets and run uncached.
+          bazel-cache: {% raw %}${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'write' || 'read' }}{% endraw %}
+          cache-read-auth: {% raw %}${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') && secrets.BAZEL_CACHE_READ_AUTH || '' }}{% endraw %}
+          cache-write-auth: {% raw %}${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') && secrets.BAZEL_CACHE_WRITE_AUTH || '' }}{% endraw %}
+          otel-auth: {% raw %}${{ secrets.OTEL_OTLP_AUTH }}{% endraw %}
+      - run: task ci:build
+{%- endif %}
+{%- if has_site %}
+
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: {{ setup }}
+        with:
+          groups: default,docs
+      - run: task ci:docs
+{%- endif %}
+
+  # The single required check: every job succeeded (or was skipped).
+  basic-gate:
+    if: always()
+    needs: [lint{% if full %}, test{% endif %}{% if has_bazel %}, build{% endif %}{% if has_site %}, docs{% endif %}]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require success or skipped
+        env:
+          NEEDS: {% raw %}${{ toJSON(needs) }}{% endraw %}
+        run: |
+          jq -r 'to_entries[] | "\(.key): \(.value.result)"' <<<"$NEEDS"
+          jq -e 'all(.[]; .result == "success" or .result == "skipped")' <<<"$NEEDS" > /dev/null

@@ -1,0 +1,50 @@
+{%- set ver = ((_copier_conf.vcs_ref or '') | regex_search('^v\\d[^\\s]*')) or 'v0' -%}
+# ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update
+name: Deploy to ocx.sh
+
+# Publishes the site on push to main that touches the site, plus a manual dispatch. No pull_request trigger: PR
+# previews stay as they are, and the `ocx.sh` environment admits main only.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "{{ site.dir }}/**"
+      - ocx.toml
+      - ocx.lock
+{%- for p in site.get('paths', []) %}
+      - "{{ p }}"
+{%- endfor %}
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: ocx.sh
+      url: {% raw %}${{ steps.deploy.outputs.url }}{% endraw %}
+    concurrency:
+      group: deploy-site
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup
+        uses: ocx-sh/conventions/.github/actions/setup@{{ _copier_conf.vcs_ref_hash }} # {{ ver }}
+        with:
+          groups: default,docs
+      - name: Build the site
+        run: task ci:docs
+      - name: Deploy
+        id: deploy
+        uses: ocx-sh/website/.github/actions/deploy@1b898a76d4c3bbe60d9619a931c74f21660f4eb4 # v0.1.1
+        with:
+          dist: "{{ site.dist }}"
+          path: "{{ site.get('path', '') }}"
+          storage-key: {% raw %}${{ secrets.BUNNY_STORAGE_KEY }}{% endraw %}

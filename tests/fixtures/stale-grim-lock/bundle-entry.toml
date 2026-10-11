@@ -1,0 +1,2 @@
+# Appended under [bundles] in a rendered grimoire.toml; absent from grimoire.lock on purpose (C-022 / D-05).
+stale-fixture = "ghcr.io/grimoire-rs/bundles/grim-essentials:latest"

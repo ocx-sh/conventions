@@ -1,0 +1,6 @@
+repo_name: conventions
+profile: full
+bazel: false
+languages: [python, shell]
+deep_os: [ubuntu-latest]
+theme_bundle: false

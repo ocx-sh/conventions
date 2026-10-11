@@ -1,0 +1,89 @@
+# Seeded once by ocx-sh/conventions; this file belongs to the repo from here on.
+# The baseline tasks (setup, lock:check, secrets, baseline:check, release:prepare,
+# copier:update, ...) come from the template-owned taskfile below.
+# Group tools (uv) are not on PATH after CI's `default,<role>` install: reach them
+# with `ocx exec -g <group> --`, as the baseline tasks do.
+version: '3'
+
+includes:
+  baseline:
+    taskfile: ./taskfiles/baseline.taskfile.yml
+    flatten: true
+
+tasks:
+  verify:
+    desc: Full local gate, the same sequence CI runs
+    cmds:
+      - task: ci:lint
+      - task: ci:test
+      - task: lock:check
+      - task: baseline:check
+      - task: secrets
+
+  test:
+    desc: Alias for ci:test
+    cmds:
+      - task: ci:test
+
+  ci:lint:
+    desc: Byte-compile the Python sources, check template/ is built from src/, lint every fixture's rendered workflows
+    cmds:
+      - ocx exec -g lint -- uv run python -m compileall -q scripts drift tests
+      - task: template:check
+      - task: template:lint
+
+  template:build:
+    desc: Generate template/ (what copier reads) from src/ and MANIFEST.toml
+    cmds:
+      - ocx exec -g lint -- uv run python scripts/build_template.py
+
+  template:check:
+    desc: Fail when the committed template/ is not what src/ and MANIFEST.toml build
+    cmds:
+      - cmd: |
+          tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+          ocx exec -g lint -- uv run python scripts/build_template.py "$tmp/template"
+          if ! diff -r "$tmp/template" template; then
+            echo "template:check: template/ is stale or hand-edited — edit src/, then run task template:build" >&2
+            exit 1
+          fi
+
+  template:lint:
+    desc: Render every fixture and lint its workflows (actionlint + zizmor)
+    cmds:
+      - cmd: |
+          tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+          for a in tests/fixtures/answers/full-*.yml tests/fixtures/answers/mirror.yml; do
+            out="$tmp/$(basename "$a" .yml)"
+            ocx exec -g lint -- uv run copier copy --defaults --quiet --vcs-ref HEAD --data-file "$a" . "$out"
+            git -C "$out" init -q
+            ocx exec -g lint -- sh -c 'cd "$1" && actionlint && uvx --from "zizmor==$2" zizmor --no-online-audits --config .github/zizmor.yml .github' _ "$out" "{{.ZIZMOR_VERSION}}" \
+              || { echo "template:lint: $(basename "$a") renders workflows that fail lint" >&2; exit 1; }
+          done
+
+  ci:test:
+    desc: Fast self-tests (JUnit XML goes to target/reports/junit/)
+    cmds:
+      - mkdir -p target/reports/junit
+      - ocx exec -g test -- uv run pytest -m "not slow" -q --junitxml=target/reports/junit/unit.xml
+
+  ci:build:
+    desc: Build (nothing to build in this repo)
+    cmds:
+      - echo "nothing to build"
+
+  ci:docs:
+    desc: Docs site build (this repo has no site)
+    cmds:
+      - echo "no site"
+
+  ci:deep:
+    desc: Deep tier (nightly verify-deep); renders fixtures and runs task setup/verify
+    cmds:
+      - mkdir -p target/reports/junit
+      - ocx exec -g test -- uv run pytest -m slow -q --junitxml=target/reports/junit/deep.xml
+
+  test:slow:
+    desc: Alias for ci:deep
+    cmds:
+      - task: ci:deep

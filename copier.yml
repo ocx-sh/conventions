@@ -1,0 +1,117 @@
+# ocx-sh/conventions copier template. No _tasks, _migrations or
+# _jinja_extensions on purpose: `--trust` must never be needed (Q5).
+# Ownership of every rendered path lives in MANIFEST.toml.
+_min_copier_version: "9.18.2"
+_subdirectory: template
+_answers_file: .copier-answers.yml
+
+# Seeded once: written on first copy, never overwritten afterwards.
+_skip_if_exists:
+  - taskfile.yml
+  - ocx.toml
+  - grimoire.toml
+  - AGENTS.md
+  - .gitleaks.toml
+  - .bazelrc
+  - MODULE.bazel
+
+repo_name:
+  type: str
+  help: Repository name (without owner), e.g. ocx-website
+
+profile:
+  type: str
+  help: Baseline profile. `mirror` renders only the mirror subset (see MANIFEST.toml).
+  choices:
+    - full
+    - mirror
+  default: full
+
+bazel:
+  type: bool
+  help: Does the repo build with Bazel (adds bazel/baseline.bazelrc, .bazelrc, MODULE.bazel, build job)?
+  default: false
+  when: "{{ profile == 'full' }}"
+
+languages:
+  type: str
+  help: Languages present in the repo (lore bundle names)
+  multiselect: true
+  choices:
+    - bazel
+    - cmake
+    - dotnet
+    - go
+    - jvm
+    - nix
+    - python
+    - rust
+    - shell
+    - swift
+    - typescript
+  default: []
+  when: "{{ profile == 'full' }}"
+  # --data / --data-file input can bypass `choices`, so reject unknown entries here.
+  validator: >-
+    {%- set allowed = ['bazel', 'cmake', 'dotnet', 'go', 'jvm', 'nix', 'python', 'rust', 'shell', 'swift', 'typescript'] -%}
+    {%- for l in languages if l not in allowed -%}
+    Unknown language '{{ l }}'; allowed: {{ allowed | join(', ') }}.{{ ' ' }}
+    {%- endfor -%}
+
+site:
+  type: yaml
+  help: >-
+    null, or a mapping {dir, dist, deploy (bool), path (optional str, may be empty), paths (optional list of str: extra deploy trigger globs)}
+    describing the site build and Bunny deploy.
+  default: null
+  when: "{{ profile == 'full' }}"
+  validator: >-
+    {%- if site is not none -%}
+    {%- if site is not mapping -%}
+    site must be null or a mapping with keys dir, dist, deploy, path, paths.
+    {%- else -%}
+    {%- for k in ['dir', 'dist', 'deploy'] if k not in site -%}
+    site.{{ k }} is required.{{ ' ' }}
+    {%- endfor -%}
+    {%- for k in site if k not in ['dir', 'dist', 'deploy', 'path', 'paths'] -%}
+    Unknown site key '{{ k }}'; allowed: dir, dist, deploy, path, paths.{{ ' ' }}
+    {%- endfor -%}
+    {%- if 'deploy' in site and site.deploy is not boolean -%}
+    site.deploy must be a boolean.{{ ' ' }}
+    {%- endif -%}
+    {%- for k in ['dir', 'dist', 'path'] if k in site and site[k] is not string -%}
+    site.{{ k }} must be a string.{{ ' ' }}
+    {%- endfor -%}
+    {%- if 'paths' in site and (site.paths is string or site.paths is not iterable or site.paths is mapping) -%}
+    site.paths must be a list of strings.{{ ' ' }}
+    {%- else -%}
+    {%- for p in site.get('paths', []) if p is not string -%}
+    site.paths must be a list of strings.{{ ' ' }}
+    {%- endfor -%}
+    {%- endif -%}
+    {%- endif -%}
+    {%- endif -%}
+
+deep_os:
+  type: str
+  help: Runner OS matrix for the nightly verify-deep workflow
+  multiselect: true
+  choices:
+    - ubuntu-latest
+    - macos-latest
+    - windows-latest
+  default:
+    - ubuntu-latest
+  when: "{{ profile == 'full' }}"
+  validator: >-
+    {%- set allowed = ['ubuntu-latest', 'macos-latest', 'windows-latest'] -%}
+    {%- if not deep_os -%}deep_os must list at least one OS.{{ ' ' }}{%- endif -%}
+    {%- for o in deep_os if o not in allowed -%}
+    Unknown deep_os '{{ o }}'; allowed: {{ allowed | join(', ') }}.{{ ' ' }}
+    {%- endfor -%}
+
+theme_bundle:
+  type: bool
+  help: Install the ocx-theme grim bundle (default on when the repo has a site)
+  default: "{{ site is not none }}"
+  when: "{{ profile == 'full' }}"

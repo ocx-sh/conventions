@@ -1,0 +1,135 @@
+# Ownership contract: one [[file]] per rendered destination path. Tests and `baseline:check` read this file.
+# path = rendered path, sourced from src/<path> (src/<path>.jinja when copier renders it); class = template-owned | seeded-once;
+# scripts/build_template.py turns profiles/when into copier's conditional names under the generated template/.
+# profiles = which of full|mirror render it; when (optional) = bazel | site | site.deploy (all imply profile full; answers "bazel", "site" non-null, "site.deploy" true).
+
+[removed_by_adoption]
+paths = [".github/dependabot.yml", "Taskfile.yml"]
+
+# --- template-owned: rendered on every update; hand edits fail baseline:check ---
+
+[[file]]
+path = ".copier-answers.yml"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = "taskfiles/baseline.taskfile.yml"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".pre-commit-config.yaml"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = "cliff.toml"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = "renovate.json"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = "CLAUDE.md"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".github/workflows/verify-basic.yml"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".github/zizmor.yml"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".claude/skills/.gitignore"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".claude/rules/.gitignore"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".opencode/skills/.gitignore"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".opencode/rules/.gitignore"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".agents/skills/.gitignore"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".github/workflows/verify-deep.yml"
+class = "template-owned"
+profiles = ["full"]
+
+[[file]]
+path = ".github/workflows/claude.yml"
+class = "template-owned"
+profiles = ["full"]
+
+[[file]]
+path = ".github/workflows/deploy-site.yml"
+class = "template-owned"
+profiles = ["full"]
+when = "site.deploy"
+
+[[file]]
+path = "bazel/baseline.bazelrc"
+class = "template-owned"
+profiles = ["full"]
+when = "bazel"
+
+# --- seeded-once (_skip_if_exists): written on first copy, repo-owned afterwards ---
+
+[[file]]
+path = "taskfile.yml"
+class = "seeded-once"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = "ocx.toml"
+class = "seeded-once"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = "grimoire.toml"
+class = "seeded-once"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = "AGENTS.md"
+class = "seeded-once"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".gitleaks.toml"
+class = "seeded-once"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".bazelrc"
+class = "seeded-once"
+profiles = ["full"]
+when = "bazel"
+
+[[file]]
+path = "MODULE.bazel"
+class = "seeded-once"
+profiles = ["full"]
+when = "bazel"

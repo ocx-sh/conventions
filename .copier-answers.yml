@@ -1,0 +1,13 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 20dfaad
+_src_path: https://github.com/ocx-sh/conventions.git
+bazel: false
+deep_os:
+- ubuntu-latest
+languages:
+- python
+- shell
+profile: full
+repo_name: conventions
+site: null
+theme_bundle: false

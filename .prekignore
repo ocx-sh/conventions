@@ -1,0 +1,3 @@
+# Template sources and the generated template carry the adopters' .pre-commit-config.yaml; not prek projects here.
+/src/
+/template/

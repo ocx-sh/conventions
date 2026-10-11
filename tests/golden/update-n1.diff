@@ -1,0 +1,6 @@
+diff --git a/taskfiles/baseline.taskfile.yml b/taskfiles/baseline.taskfile.yml
+--- a/taskfiles/baseline.taskfile.yml
++++ b/taskfiles/baseline.taskfile.yml
+@@ -1 +1 @@
+-# ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update
++# ocx-baseline: template-owned file (update-n1 sentinel)

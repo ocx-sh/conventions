@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ocx-sh/conventions/drift/schema.json",
+  "title": "ocx-conventions drift status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["generated_at", "latest_version", "repos"],
+  "properties": {
+    "generated_at": {"type": "string", "format": "date-time"},
+    "latest_version": {"type": "string"},
+    "repos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "repo", "baseline_version", "latest_version", "adopted", "excluded", "reason", "flags"],
+        "properties": {
+          "key": {"type": "string"},
+          "repo": {"type": "string"},
+          "baseline_version": {"type": ["string", "null"]},
+          "latest_version": {"type": "string"},
+          "adopted": {"type": "boolean"},
+          "excluded": {"type": "boolean"},
+          "reason": {"type": ["string", "null"]},
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["class", "detail"],
+              "properties": {
+                "class": {
+                  "enum": [
+                    "baseline-behind",
+                    "not-adopted",
+                    "stale-pin",
+                    "setup-ocx-stale",
+                    "ocx-cli-stale",
+                    "pending-updates",
+                    "nightly-red",
+                    "bundle-missing",
+                    "grim-pending",
+                    "unreachable"
+                  ]
+                },
+                "detail": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

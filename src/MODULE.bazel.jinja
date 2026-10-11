@@ -1,0 +1,14 @@
+# Seeded once by ocx-sh/conventions; the repo owns it afterwards.
+# Tools and toolchains come from ocx through rules_ocx (no http_archive where an ocx package exists);
+# the extension reads the same ocx.toml/ocx.lock the shell uses.
+module(name = "{{ repo_name }}", version = "0.0.0")
+
+bazel_dep(name = "rules_ocx", version = "0.5.0")
+
+ocx = use_extension("@rules_ocx//ocx:extensions.bzl", "ocx")
+ocx.project(
+    name = "tools",
+    ocx_lock = "//:ocx.lock",
+    ocx_toml = "//:ocx.toml",
+)
+use_repo(ocx, "tools")

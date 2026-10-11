@@ -1,0 +1,15 @@
+# Fleet-style ocx.toml with floating tags (modelled on www-setup).
+# Default scope: cross-platform tools only.
+[tools]
+actionlint = "ocx.sh/actionlint/actionlint:1"   # floating major
+elvish = "ocx.sh/elvish/elvish:latest"
+git-cliff = "ocx.sh/git-cliff/git-cliff:2"
+gitleaks = "ocx.sh/gitleaks/gitleaks:8.30.1"
+lychee = "ocx.sh/lychee/lychee:0"
+prek = "ocx.sh/prek/prek:latest"
+shellcheck = "ocx.sh/shellcheck/shellcheck:0.11"
+task = "ocx.sh/go-task/task:3"
+
+# fish is UNIX-ONLY: keep it out of the default table.
+[group.unix.tools]
+fish = "ocx.sh/fish-shell/fish:latest"

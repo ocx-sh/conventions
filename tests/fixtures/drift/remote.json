@@ -1,0 +1,112 @@
+{
+  "latest_version": "v0.2.0",
+  "newest_setup_ocx": "v1.4.0",
+  "newest_ocx": "0.6.5",
+  "index": {
+    "ocx.sh/go-task/task": "3.54.0",
+    "ocx.sh/prek/prek": "0.5.5",
+    "ocx.sh/gitleaks/gitleaks": "8.30.1"
+  },
+  "repos": {
+    "clean": {
+      "answers": "# Changes here will be overwritten by Copier\n_commit: v0.2.0\n_src_path: https://github.com/ocx-sh/conventions.git\nrepo_name: x\nprofile: full\nlanguages: [python]\ntheme_bundle: false\n",
+      "ocx_toml": "[tools]\ntask = \"ocx.sh/go-task/task:3.54.0\"\n\n[group.lint.tools]\nprek = \"ocx.sh/prek/prek:0.5.5\"\ngitleaks = \"ocx.sh/gitleaks/gitleaks:8.30.1\"\n",
+      "grimoire_toml": "[options]\nclients = [\"claude\", \"opencode\", \"codex\"]\n\n[bundles]\ndocs-essentials = \"ghcr.io/ocx-sh/lore/docs-essentials:latest\"\ncode-docs-essentials = \"ghcr.io/ocx-sh/lore/code-docs-essentials:latest\"\npython-essentials = \"ghcr.io/ocx-sh/lore/python-essentials:latest\"\n",
+      "setup_ocx_ref": "v1.4.0",
+      "ocx_cli": "0.6.5",
+      "renovate_prs": 0,
+      "nightly": "success",
+      "grim_floating_pending": false
+    },
+    "behind": {
+      "answers": "# Changes here will be overwritten by Copier\n_commit: v0.1.0\n_src_path: https://github.com/ocx-sh/conventions.git\nrepo_name: x\nprofile: full\nlanguages: [python]\ntheme_bundle: false\n",
+      "ocx_toml": "[tools]\ntask = \"ocx.sh/go-task/task:3.54.0\"\n\n[group.lint.tools]\nprek = \"ocx.sh/prek/prek:0.5.5\"\ngitleaks = \"ocx.sh/gitleaks/gitleaks:8.30.1\"\n",
+      "grimoire_toml": "[options]\nclients = [\"claude\", \"opencode\", \"codex\"]\n\n[bundles]\ndocs-essentials = \"ghcr.io/ocx-sh/lore/docs-essentials:latest\"\ncode-docs-essentials = \"ghcr.io/ocx-sh/lore/code-docs-essentials:latest\"\npython-essentials = \"ghcr.io/ocx-sh/lore/python-essentials:latest\"\n",
+      "setup_ocx_ref": "v1.4.0",
+      "ocx_cli": "0.6.5",
+      "renovate_prs": 0,
+      "nightly": "success",
+      "grim_floating_pending": false
+    },
+    "stale-pin": {
+      "answers": "# Changes here will be overwritten by Copier\n_commit: v0.2.0\n_src_path: https://github.com/ocx-sh/conventions.git\nrepo_name: x\nprofile: full\nlanguages: [python]\ntheme_bundle: false\n",
+      "ocx_toml": "[tools]\ntask = \"ocx.sh/go-task/task:3.54.0\"\n\n[group.lint.tools]\nprek = \"ocx.sh/prek/prek:0.5.4\"\ngitleaks = \"ocx.sh/gitleaks/gitleaks:8.30.1\"\n",
+      "grimoire_toml": "[options]\nclients = [\"claude\", \"opencode\", \"codex\"]\n\n[bundles]\ndocs-essentials = \"ghcr.io/ocx-sh/lore/docs-essentials:latest\"\ncode-docs-essentials = \"ghcr.io/ocx-sh/lore/code-docs-essentials:latest\"\npython-essentials = \"ghcr.io/ocx-sh/lore/python-essentials:latest\"\n",
+      "setup_ocx_ref": "v1.4.0",
+      "ocx_cli": "0.6.5",
+      "renovate_prs": 0,
+      "nightly": "success",
+      "grim_floating_pending": false
+    },
+    "setup-stale": {
+      "answers": "# Changes here will be overwritten by Copier\n_commit: v0.2.0\n_src_path: https://github.com/ocx-sh/conventions.git\nrepo_name: x\nprofile: full\nlanguages: [python]\ntheme_bundle: false\n",
+      "ocx_toml": "[tools]\ntask = \"ocx.sh/go-task/task:3.54.0\"\n\n[group.lint.tools]\nprek = \"ocx.sh/prek/prek:0.5.5\"\ngitleaks = \"ocx.sh/gitleaks/gitleaks:8.30.1\"\n",
+      "grimoire_toml": "[options]\nclients = [\"claude\", \"opencode\", \"codex\"]\n\n[bundles]\ndocs-essentials = \"ghcr.io/ocx-sh/lore/docs-essentials:latest\"\ncode-docs-essentials = \"ghcr.io/ocx-sh/lore/code-docs-essentials:latest\"\npython-essentials = \"ghcr.io/ocx-sh/lore/python-essentials:latest\"\n",
+      "setup_ocx_ref": "v1.3.0",
+      "ocx_cli": "0.6.5",
+      "renovate_prs": 0,
+      "nightly": "success",
+      "grim_floating_pending": false
+    },
+    "cli-stale": {
+      "answers": "# Changes here will be overwritten by Copier\n_commit: v0.2.0\n_src_path: https://github.com/ocx-sh/conventions.git\nrepo_name: x\nprofile: full\nlanguages: [python]\ntheme_bundle: false\n",
+      "ocx_toml": "[tools]\ntask = \"ocx.sh/go-task/task:3.54.0\"\n\n[group.lint.tools]\nprek = \"ocx.sh/prek/prek:0.5.5\"\ngitleaks = \"ocx.sh/gitleaks/gitleaks:8.30.1\"\n",
+      "grimoire_toml": "[options]\nclients = [\"claude\", \"opencode\", \"codex\"]\n\n[bundles]\ndocs-essentials = \"ghcr.io/ocx-sh/lore/docs-essentials:latest\"\ncode-docs-essentials = \"ghcr.io/ocx-sh/lore/code-docs-essentials:latest\"\npython-essentials = \"ghcr.io/ocx-sh/lore/python-essentials:latest\"\n",
+      "setup_ocx_ref": "v1.4.0",
+      "ocx_cli": "0.6.4",
+      "renovate_prs": 0,
+      "nightly": "success",
+      "grim_floating_pending": false
+    },
+    "pending": {
+      "answers": "# Changes here will be overwritten by Copier\n_commit: v0.2.0\n_src_path: https://github.com/ocx-sh/conventions.git\nrepo_name: x\nprofile: full\nlanguages: [python]\ntheme_bundle: false\n",
+      "ocx_toml": "[tools]\ntask = \"ocx.sh/go-task/task:3.54.0\"\n\n[group.lint.tools]\nprek = \"ocx.sh/prek/prek:0.5.5\"\ngitleaks = \"ocx.sh/gitleaks/gitleaks:8.30.1\"\n",
+      "grimoire_toml": "[options]\nclients = [\"claude\", \"opencode\", \"codex\"]\n\n[bundles]\ndocs-essentials = \"ghcr.io/ocx-sh/lore/docs-essentials:latest\"\ncode-docs-essentials = \"ghcr.io/ocx-sh/lore/code-docs-essentials:latest\"\npython-essentials = \"ghcr.io/ocx-sh/lore/python-essentials:latest\"\n",
+      "setup_ocx_ref": "v1.4.0",
+      "ocx_cli": "0.6.5",
+      "renovate_prs": 2,
+      "nightly": "success",
+      "grim_floating_pending": false
+    },
+    "red": {
+      "answers": "# Changes here will be overwritten by Copier\n_commit: v0.2.0\n_src_path: https://github.com/ocx-sh/conventions.git\nrepo_name: x\nprofile: full\nlanguages: [python]\ntheme_bundle: false\n",
+      "ocx_toml": "[tools]\ntask = \"ocx.sh/go-task/task:3.54.0\"\n\n[group.lint.tools]\nprek = \"ocx.sh/prek/prek:0.5.5\"\ngitleaks = \"ocx.sh/gitleaks/gitleaks:8.30.1\"\n",
+      "grimoire_toml": "[options]\nclients = [\"claude\", \"opencode\", \"codex\"]\n\n[bundles]\ndocs-essentials = \"ghcr.io/ocx-sh/lore/docs-essentials:latest\"\ncode-docs-essentials = \"ghcr.io/ocx-sh/lore/code-docs-essentials:latest\"\npython-essentials = \"ghcr.io/ocx-sh/lore/python-essentials:latest\"\n",
+      "setup_ocx_ref": "v1.4.0",
+      "ocx_cli": "0.6.5",
+      "renovate_prs": 0,
+      "nightly": "failure",
+      "grim_floating_pending": false
+    },
+    "no-bundle": {
+      "answers": "# Changes here will be overwritten by Copier\n_commit: v0.2.0\n_src_path: https://github.com/ocx-sh/conventions.git\nrepo_name: x\nprofile: full\nlanguages: [python]\ntheme_bundle: false\n",
+      "ocx_toml": "[tools]\ntask = \"ocx.sh/go-task/task:3.54.0\"\n\n[group.lint.tools]\nprek = \"ocx.sh/prek/prek:0.5.5\"\ngitleaks = \"ocx.sh/gitleaks/gitleaks:8.30.1\"\n",
+      "grimoire_toml": "[options]\nclients = [\"claude\", \"opencode\", \"codex\"]\n\n[bundles]\ndocs-essentials = \"ghcr.io/ocx-sh/lore/docs-essentials:latest\"\npython-essentials = \"ghcr.io/ocx-sh/lore/python-essentials:latest\"\n",
+      "setup_ocx_ref": "v1.4.0",
+      "ocx_cli": "0.6.5",
+      "renovate_prs": 0,
+      "nightly": "success",
+      "grim_floating_pending": false
+    },
+    "grim-pending": {
+      "answers": "# Changes here will be overwritten by Copier\n_commit: v0.2.0\n_src_path: https://github.com/ocx-sh/conventions.git\nrepo_name: x\nprofile: full\nlanguages: [python]\ntheme_bundle: false\n",
+      "ocx_toml": "[tools]\ntask = \"ocx.sh/go-task/task:3.54.0\"\n\n[group.lint.tools]\nprek = \"ocx.sh/prek/prek:0.5.5\"\ngitleaks = \"ocx.sh/gitleaks/gitleaks:8.30.1\"\n",
+      "grimoire_toml": "[options]\nclients = [\"claude\", \"opencode\", \"codex\"]\n\n[bundles]\ndocs-essentials = \"ghcr.io/ocx-sh/lore/docs-essentials:latest\"\ncode-docs-essentials = \"ghcr.io/ocx-sh/lore/code-docs-essentials:latest\"\npython-essentials = \"ghcr.io/ocx-sh/lore/python-essentials:latest\"\n",
+      "setup_ocx_ref": "v1.4.0",
+      "ocx_cli": "0.6.5",
+      "renovate_prs": 0,
+      "nightly": "success",
+      "grim_floating_pending": true
+    },
+    "not-adopted": {
+      "answers": null,
+      "ocx_toml": null,
+      "grimoire_toml": null,
+      "setup_ocx_ref": null,
+      "ocx_cli": null,
+      "renovate_prs": 0,
+      "nightly": null,
+      "grim_floating_pending": false
+    }
+  }
+}
