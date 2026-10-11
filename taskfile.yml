@@ -1,16 +1,56 @@
-version: "3"
+# Seeded once by ocx-sh/conventions; this file belongs to the repo from here on.
+# The baseline tasks (setup, lock:check, secrets, baseline:check, release:prepare,
+# copier:update, ...) come from the template-owned taskfile below.
+version: '3'
+
+includes:
+  baseline:
+    taskfile: ./taskfiles/baseline.taskfile.yml
+    flatten: true
 
 tasks:
-  test:
-    desc: Fast self-tests
+  verify:
+    desc: Full local gate, the same sequence CI runs
     cmds:
-      - uv run pytest -m "not slow" -q
+      - task: ci:lint
+      - task: ci:test
+      - task: lock:check
+      - task: baseline:check
+      - task: secrets
+
+  test:
+    desc: Alias for ci:test
+    cmds:
+      - task: ci:test
+
+  ci:lint:
+    desc: Byte-compile the Python sources (the repo's lint)
+    cmds:
+      - uv run python -m compileall -q scripts drift tests
+
+  ci:test:
+    desc: Fast self-tests (JUnit XML goes to target/reports/junit/)
+    cmds:
+      - mkdir -p target/reports/junit
+      - uv run pytest -m "not slow" -q --junitxml=target/reports/junit/unit.xml
+
+  ci:build:
+    desc: Build (nothing to build in this repo)
+    cmds:
+      - echo "nothing to build"
+
+  ci:docs:
+    desc: Docs site build (this repo has no site)
+    cmds:
+      - echo "no site"
+
+  ci:deep:
+    desc: Deep tier (nightly verify-deep); renders fixtures and runs task setup/verify
+    cmds:
+      - mkdir -p target/reports/junit
+      - uv run pytest -m slow -q --junitxml=target/reports/junit/deep.xml
 
   test:slow:
-    desc: Render fixtures and run task setup/verify
+    desc: Alias for ci:deep
     cmds:
-      - uv run pytest -m slow -q
-
-  verify:
-    desc: Full local gate (P6 replaces this with the dogfood render)
-    deps: [test]
+      - task: ci:deep

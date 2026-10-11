@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+# Allowlist false positives by path or regex here, never by .gitleaksignore fingerprints.
+[allowlist]
+description = "Repo-local allowlist for gitleaks false positives"
+# The planted test secret used by the S-002 self-test.
+paths = ['''^tests/fixtures/planted-secret/''']
