@@ -140,4 +140,13 @@ def test_c022_copier_update_n_to_n1_matches_golden(tmp_path):
 
     changed = set(run(["git", "diff", "--name-only"], repo, env).stdout.split())
     changed |= set(run(["git", "ls-files", "--others", "--exclude-standard"], repo, env).stdout.split())
-    assert changed == {BASELINE_TASKFILE, ".copier-answers.yml"}, f"C-022: update must touch only the sentinel file and .copier-answers.yml, got {sorted(changed)}"
+    # Files that embed the template commit (D-02 setup pin, C-015 preset ref) move with every update.
+    ref_pinned = {".github/workflows/verify-basic.yml", ".github/workflows/verify-deep.yml",
+                  ".github/workflows/deploy-site.yml", "renovate.json"}
+    assert BASELINE_TASKFILE in changed and ".copier-answers.yml" in changed, f"C-022: update must touch the sentinel file and .copier-answers.yml, got {sorted(changed)}"
+    extra = changed - {BASELINE_TASKFILE, ".copier-answers.yml"} - ref_pinned
+    assert not extra, f"C-022: update touched files beyond the sentinel, answers and ref-pinned files: {sorted(extra)}"
+    for f in changed & ref_pinned:
+        d = run(["git", "diff", "-U0", "--no-color", "--", f], repo, env).stdout
+        body = [ln for ln in d.splitlines() if ln[:1] in "+-" and not ln.startswith(("+++", "---"))]
+        assert all(("conventions" in ln) for ln in body), f"C-022: {f} changed beyond its template-ref pin: {body}"
