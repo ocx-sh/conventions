@@ -29,8 +29,14 @@ PY
 
 cd "$dest"
 if [ -f .copier-answers.yml ]; then
-  [ "$(sed -n 's/^_commit: *//p' .copier-answers.yml)" = "$ref" ] \
-    || die "already adopted at a different ref; use 'copier update' to move to $ref"
+  rec=$(sed -n 's/^_commit: *//p' .copier-answers.yml)
+  if [ "$rec" != "$ref" ]; then
+    # copier records `git describe` output, so compare resolved commits, not strings.
+    git clone -q --no-checkout "$src" "$tmp/src" 2>/dev/null || die "cannot clone $src to compare $rec with $ref"
+    a=$(git -C "$tmp/src" rev-parse -q --verify "$rec^{commit}" 2>/dev/null || true)
+    b=$(git -C "$tmp/src" rev-parse -q --verify "$ref^{commit}" 2>/dev/null || git -C "$tmp/src" rev-parse -q --verify "origin/$ref^{commit}" 2>/dev/null || true)
+    { [ -n "$a" ] && [ "$a" = "$b" ]; } || die "already adopted at a different ref; use 'copier update' to move to $ref"
+  fi
   echo "adopt: $dest already adopted at $ref; nothing to do"
   exit 0
 fi
