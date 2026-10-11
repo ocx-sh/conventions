@@ -7,7 +7,7 @@ schema = 1
 repo = "ocx-sh/conventions"
 path = "ocx-conventions"          # local checkout dir name under the fleet root
 iteration = 1                      # 1 canary, 2 fleet, 3 mirrors
-adopted = false
+adopted = true
 excluded = false
 
 [repos.conventions.answers]
