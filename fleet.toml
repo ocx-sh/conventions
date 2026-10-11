@@ -1,0 +1,382 @@
+# fleet.toml — every repo the OCX baseline tracks. Read by scripts/adopt.sh, drift/check.py and the Renovate runner.
+schema = 1
+
+# ---- iteration 1: canary ----
+
+[repos.conventions]
+repo = "ocx-sh/conventions"
+path = "ocx-conventions"          # local checkout dir name under the fleet root
+iteration = 1                      # 1 canary, 2 fleet, 3 mirrors
+adopted = false
+excluded = false
+
+[repos.conventions.answers]
+repo_name = "conventions"
+profile = "full"
+bazel = false
+languages = ["python", "shell"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+# site omitted = no site
+
+[repos.rules_ocx]
+repo = "ocx-sh/rules_ocx"
+path = "rules_ocx"
+iteration = 1
+adopted = false
+excluded = false
+
+[repos.rules_ocx.answers]
+repo_name = "rules_ocx"
+profile = "full"
+bazel = true
+site = { dir = "site", dist = "site/dist", deploy = true, path = "/integrations/bazel" }  # deploy.yml passes no path; Astro base /integrations/bazel/
+languages = ["bazel", "shell", "typescript"]
+deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+theme_bundle = true
+
+[repos.ocx-sdk-python]
+repo = "ocx-sh/ocx-sdk-python"
+path = "ocx-sdk-python"
+iteration = 1
+adopted = false
+excluded = false
+
+[repos.ocx-sdk-python.answers]
+repo_name = "ocx-sdk-python"
+profile = "full"
+bazel = false
+site = { dir = "site", dist = "site/dist", deploy = true, path = "/integrations/python" }  # Astro base /integrations/python/
+languages = ["python", "typescript"]
+deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+theme_bundle = true
+
+[repos.ocx-website]
+repo = "ocx-sh/website"
+path = "ocx-website"
+iteration = 1
+adopted = false
+excluded = false
+
+[repos.ocx-website.answers]
+repo_name = "website"
+profile = "full"
+bazel = false
+site = { dir = "site", dist = "site/dist", deploy = false, path = "" }  # root site; site.yml gates Bunny deploy on BUNNY_DEPLOY=true, kept false per plan
+languages = ["typescript"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+# ---- iteration 2: fleet (answers from iteration-tables.md; theme_bundle false, deep_os best-effort from runs-on grep, verify in iteration 2) ----
+
+[repos.find_ocx]
+repo = "ocx-sh/find_ocx"
+path = "find_ocx"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.find_ocx.answers]
+repo_name = "find_ocx"
+profile = "full"
+bazel = false
+site = { dir = "site", dist = "site/dist", deploy = true, path = "/integrations/cmake" }  # TODO verify path: deploy.yml passes no path (action default = shortest claim)
+languages = ["cmake", "typescript"]
+deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+theme_bundle = false
+
+[repos.grimoire]
+repo = "grimoire-rs/grimoire"
+path = "grimoire"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.grimoire.answers]
+repo_name = "grimoire"
+profile = "full"
+bazel = false
+site = { dir = "docs", dist = "docs/dist", deploy = false }  # Astro (docs/astro.config.mjs); Pages, no deploy
+languages = ["rust", "typescript"]
+deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+theme_bundle = false
+
+[repos.grimoire-index]
+repo = "grimoire-rs/index"
+path = "grimoire-index"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.grimoire-index.answers]
+repo_name = "index"
+profile = "full"
+bazel = false
+languages = ["typescript"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.grimoire-indexer]
+repo = "grimoire-rs/indexer"
+path = "grimoire-indexer"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.grimoire-indexer.answers]
+repo_name = "indexer"
+profile = "full"
+bazel = false
+site = { dir = ".", dist = "site", deploy = false }  # mkdocs.yml at root, default site_dir; Pages, no deploy
+languages = ["typescript", "python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.grimoire-lore]
+repo = "ocx-sh/grimoire-lore"    # origin is ocx-sh, not grimoire-rs
+path = "grimoire-lore"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.grimoire-lore.answers]
+repo_name = "grimoire-lore"
+profile = "full"
+bazel = false
+site = { dir = "docs", dist = "docs/dist", deploy = false }  # TODO verify in iteration 2: no docs builder found on origin/main; Pages
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.grimoire-vscode]
+repo = "grimoire-rs/grimoire-vscode"
+path = "grimoire-vscode"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.grimoire-vscode.answers]
+repo_name = "grimoire-vscode"
+profile = "full"
+bazel = false
+languages = ["typescript"]
+deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+theme_bundle = false
+
+[repos.index]
+repo = "ocx-sh/index"
+path = "index"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.index.answers]
+repo_name = "index"
+profile = "full"
+bazel = false
+site = { dir = "site", dist = "site/dist", deploy = false }  # TODO verify in iteration 2: vitepress (not Bunny); no .vitepress config found on origin/main
+languages = ["typescript", "python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.ocx]
+repo = "ocx-sh/ocx"
+path = "ocx"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.ocx.answers]
+repo_name = "ocx"
+profile = "full"
+bazel = true
+site = { dir = "website", dist = "website/.vitepress/dist", deploy = true, path = "" }  # TODO verify path: deploy-website.yml targets ocx.sh (prod) / dev.ocx.sh
+languages = ["rust", "bazel", "python", "shell", "typescript"]
+deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+theme_bundle = false
+
+[repos.ocx-catalog]
+repo = "ocx-sh/catalog"
+path = "ocx-catalog"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.ocx-catalog.answers]
+repo_name = "catalog"
+profile = "full"
+bazel = false
+site = { dir = ".", dist = "site", deploy = false }  # mkdocs.yml at root; docs on branch only; adopt after the theme-port branch lands
+languages = ["typescript"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.ocx-indexbot]
+repo = "ocx-sh/indexbot"
+path = "ocx-indexbot"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.ocx-indexbot.answers]
+repo_name = "indexbot"
+profile = "full"
+bazel = false
+site = { dir = ".", dist = "site", deploy = false }  # mkdocs.yml at root; no deploy
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.ocx-marketing]
+repo = "ocx-sh/marketing"       # private
+path = "ocx-marketing"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.ocx-marketing.answers]
+repo_name = "marketing"
+profile = "full"
+bazel = false
+languages = ["python", "typescript"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.ocx-mcp]
+repo = "ocx-sh/ocx-mcp"
+path = "ocx-mcp"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.ocx-mcp.answers]
+repo_name = "ocx-mcp"
+profile = "full"
+bazel = false
+site = { dir = ".", dist = "site", deploy = false }  # mkdocs.yml at root; no deploy
+languages = ["rust"]
+deep_os = ["ubuntu-latest", "macos-latest"]  # windows-msvc artifacts only; TODO verify runs-on legs in iteration 2
+theme_bundle = false
+
+[repos.ocx-mirror]
+repo = "ocx-sh/ocx-mirror"
+path = "ocx-mirror"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.ocx-mirror.answers]
+repo_name = "ocx-mirror"
+profile = "full"
+bazel = true
+site = { dir = ".", dist = "site", deploy = false }  # mkdocs.yml at root; no deploy
+languages = ["rust", "bazel"]
+deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+theme_bundle = false
+
+[repos.ocx-mirror-sdk]
+repo = "ocx-sh/ocx-mirror-sdk"
+path = "ocx-mirror-sdk"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.ocx-mirror-sdk.answers]
+repo_name = "ocx-mirror-sdk"
+profile = "full"
+bazel = false
+site = { dir = ".", dist = "site", deploy = false }  # mkdocs.yml at root; no deploy
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.setup-grimoire]
+repo = "grimoire-rs/setup-grimoire"
+path = "setup-grimoire"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.setup-grimoire.answers]
+repo_name = "setup-grimoire"
+profile = "full"
+bazel = false
+site = { dir = "site", dist = "site", deploy = false }  # static HTML (site/index.html), no build step; Pages
+languages = ["shell"]
+deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+theme_bundle = false
+
+[repos.setup-ocx]
+repo = "ocx-sh/setup-ocx"
+path = "setup-ocx"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.setup-ocx.answers]
+repo_name = "setup-ocx"
+profile = "full"
+bazel = false
+languages = ["typescript"]
+deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+theme_bundle = false
+
+[repos.vscode-ocx]
+repo = "ocx-sh/vscode-ocx"
+path = "vscode-ocx"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.vscode-ocx.answers]
+repo_name = "vscode-ocx"
+profile = "full"
+bazel = false
+languages = ["typescript"]
+deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+theme_bundle = false
+
+[repos.www-setup]
+repo = "ocx-sh/www-setup"
+path = "www-setup"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.www-setup.answers]
+repo_name = "www-setup"
+profile = "full"
+bazel = false
+# site omitted: Bunny installers, not a site deploy
+languages = ["shell"]
+deep_os = ["ubuntu-latest", "macos-26", "windows-latest"]
+theme_bundle = false
+
+# ---- iteration 3: mirrors (D-09) ----
+
+[repos.mirrors]
+repo = "ocx-contrib/mirror-*"
+path = "ocx-contrib"             # working root of the mirror-* checkouts; not itself a git repo
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirrors.answers]
+repo_name = "mirror"
+profile = "mirror"
+
+# ---- excluded ----
+
+[repos.rust-oci-client]
+repo = "ocx-sh/rust-oci-client"
+path = "rust-oci-client"
+adopted = false
+excluded = true
+reason = "upstream fork of oras-project/rust-oci-client; baseline files would leak into upstream PRs (D-10)"
+
+[repos.grimoire-components]
+repo = "grimoire-rs/components"   # gitlab.com, not GitHub
+path = "grimoire-components"
+adopted = false
+excluded = true
+reason = "GitLab-hosted, outside the GitHub fleet (D-10)"

@@ -1,0 +1,155 @@
+schema = 1
+
+[repos.clean]
+repo = "ocx-sh/clean"
+path = "clean"
+iteration = 1
+adopted = true
+excluded = false
+
+[repos.clean.answers]
+repo_name = "clean"
+profile = "full"
+bazel = false
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.behind]
+repo = "ocx-sh/behind"
+path = "behind"
+iteration = 1
+adopted = true
+excluded = false
+
+[repos.behind.answers]
+repo_name = "behind"
+profile = "full"
+bazel = false
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.stale-pin]
+repo = "ocx-sh/stale-pin"
+path = "stale-pin"
+iteration = 1
+adopted = true
+excluded = false
+
+[repos.stale-pin.answers]
+repo_name = "stale-pin"
+profile = "full"
+bazel = false
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.setup-stale]
+repo = "ocx-sh/setup-stale"
+path = "setup-stale"
+iteration = 1
+adopted = true
+excluded = false
+
+[repos.setup-stale.answers]
+repo_name = "setup-stale"
+profile = "full"
+bazel = false
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.cli-stale]
+repo = "ocx-sh/cli-stale"
+path = "cli-stale"
+iteration = 1
+adopted = true
+excluded = false
+
+[repos.cli-stale.answers]
+repo_name = "cli-stale"
+profile = "full"
+bazel = false
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.pending]
+repo = "ocx-sh/pending"
+path = "pending"
+iteration = 1
+adopted = true
+excluded = false
+
+[repos.pending.answers]
+repo_name = "pending"
+profile = "full"
+bazel = false
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.red]
+repo = "ocx-sh/red"
+path = "red"
+iteration = 1
+adopted = true
+excluded = false
+
+[repos.red.answers]
+repo_name = "red"
+profile = "full"
+bazel = false
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.no-bundle]
+repo = "ocx-sh/no-bundle"
+path = "no-bundle"
+iteration = 1
+adopted = true
+excluded = false
+
+[repos.no-bundle.answers]
+repo_name = "no-bundle"
+profile = "full"
+bazel = false
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.grim-pending]
+repo = "ocx-sh/grim-pending"
+path = "grim-pending"
+iteration = 1
+adopted = true
+excluded = false
+
+[repos.grim-pending.answers]
+repo_name = "grim-pending"
+profile = "full"
+bazel = false
+languages = ["python"]
+deep_os = ["ubuntu-latest"]
+theme_bundle = false
+
+[repos.not-adopted]
+repo = "ocx-sh/not-adopted"
+path = "not-adopted"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.not-adopted.answers]
+repo_name = "not-adopted"
+profile = "full"
+languages = ["python"]
+
+[repos.excluded]
+repo = "ocx-sh/excluded"
+path = "excluded"
+adopted = false
+excluded = true
+reason = "upstream fork; baseline files would leak upstream (D-10)"

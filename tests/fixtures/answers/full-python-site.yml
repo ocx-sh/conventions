@@ -1,0 +1,11 @@
+repo_name: ocx-sdk-python
+profile: full
+bazel: false
+site:
+  dir: site
+  dist: site/dist
+  deploy: true
+  path: /integrations/python
+languages: [python, typescript]
+deep_os: [ubuntu-latest, macos-latest, windows-latest]
+theme_bundle: true

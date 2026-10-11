@@ -1,0 +1,12 @@
+# Tiny stand-in for the conventions template, used by tests/test_adopt.py.
+_subdirectory: template
+_answers_file: .copier-answers.yml
+_skip_if_exists:
+  - taskfile.yml
+
+repo_name:
+  type: str
+profile:
+  type: str
+  choices: [full, mirror]
+  default: full

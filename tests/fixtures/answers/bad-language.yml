@@ -1,0 +1,6 @@
+repo_name: bad-language
+profile: full
+bazel: false
+languages: [python, cobol]
+deep_os: [ubuntu-latest]
+theme_bundle: false

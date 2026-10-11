@@ -1,0 +1,16 @@
+version: "3"
+
+tasks:
+  test:
+    desc: Fast self-tests
+    cmds:
+      - uv run pytest -m "not slow" -q
+
+  test:slow:
+    desc: Render fixtures and run task setup/verify
+    cmds:
+      - uv run pytest -m slow -q
+
+  verify:
+    desc: Full local gate (P6 replaces this with the dogfood render)
+    deps: [test]
