@@ -12,6 +12,8 @@ uv = "ocx.sh/astral-sh/uv:0.13.0"
 [group.test.tools]
 # uv again under its own group: the CI test job pulls only default,test.
 uv = "ocx.sh/astral-sh/uv:0.13.0"
+# tests/test_ai_config.py shells out to grim (build, publish --dry-run).
+grim = "ocx.sh/grimoire/cli:0.14.3"
 
 # bazelisk runs the Renovate runner's `bazel mod deps` postUpgradeTask
 [group.build.tools]
