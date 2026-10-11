@@ -25,7 +25,12 @@ GH = r"""
 echo "gh $*" >> "$STUB_LOG"
 case "$1 $2" in
   "auth status") exit "${GH_AUTH_RC:-0}" ;;
-  "run list") cat "$GH_RUNS_FILE" ;;
+  "run list")
+    if [ -n "${GH_RUN_404:-}" ]; then
+      echo "could not find any workflows named verify-deep.yml: HTTP 404: workflow verify-deep.yml not found on the default branch (https://api.github.com/repos/o/r/actions/workflows/verify-deep.yml/runs)" >&2
+      exit 1
+    fi
+    cat "$GH_RUNS_FILE" ;;
   "repo view") echo main ;;
 esac
 exit 0
@@ -70,10 +75,10 @@ def rel(render, tmp_path):
     runs.write_text(json.dumps([{"conclusion": "success", "url": RUN_URL, "event": "schedule"}]))
     env = stub_env(bindir, STUB_LOG=str(log), GH_RUNS_FILE=str(runs), GH_AUTH_RC="0")
 
-    def go(*args, runs_json=None, auth_rc=None):
+    def go(*args, runs_json=None, auth_rc=None, **extra_env):
         if runs_json is not None:
             runs.write_text(runs_json)
-        e = dict(env)
+        e = dict(env, **extra_env)
         if auth_rc is not None:
             e["GH_AUTH_RC"] = str(auth_rc)
         r = subprocess.run(["task", "release:prepare", *args], cwd=repo, env=e, stdin=subprocess.DEVNULL,
@@ -129,4 +134,12 @@ def test_unauthenticated_gh_refuses(rel):
     repo, _, go = rel
     r, out = go("BUMP=minor", auth_rc=1)
     assert r.returncode != 0, "C-004 unauthenticated gh must block release:prepare"
+    assert not (repo / "CHANGELOG.md").exists(), "C-004 refusal must not write CHANGELOG.md"
+
+
+def test_workflow_missing_on_default_branch_reads_as_no_run(rel):
+    repo, _, go = rel
+    r, out = go("BUMP=minor", GH_RUN_404="1")
+    assert r.returncode != 0, f"C-004 a 404 from gh run list must exit non-zero: {out}"
+    assert "no verify-deep run on main yet — dispatch one" in out, f"C-004 a 404 must print the never-ran message: {out}"
     assert not (repo / "CHANGELOG.md").exists(), "C-004 refusal must not write CHANGELOG.md"

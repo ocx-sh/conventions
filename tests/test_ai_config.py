@@ -62,6 +62,15 @@ def test_publish_dry_run():
     assert r.returncode == 0, f"C-021 `grim publish --dry-run --version 0.0.0` must exit 0: {out}"
 
 
+def test_publish_rule_and_skill_have_distinct_repositories():
+    r = grim("publish", "--dry-run", "--version", "0.0.0")
+    out = r.stdout + r.stderr
+    if r.returncode != 0 and AUTH_FAILURE.search(out):
+        pytest.skip(f"C-021 dry-run needs registry access here: {out[-300:]}")
+    refs = [ln.split()[1] for ln in out.splitlines() if ln.split()[:1] in (["skill"], ["rule"])]
+    assert len(refs) == 2 and len(set(refs)) == 2, f"C-021 the rule and the skill must publish to different repositories, got {refs}"
+
+
 def test_publish_workflow_only_on_version_tags():
     assert PUBLISH_YML.exists(), "C-021 .github/workflows/publish.yml must exist"
     wf = yaml.safe_load(PUBLISH_YML.read_text())

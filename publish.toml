@@ -23,7 +23,9 @@ security = "https://github.com/ocx-sh/conventions/security"
 [description]
 readme = "README.md"
 
-# Conventional paths: rules/<name>.md, skills/<name>/.
-[rules.ocx-baseline]
+# The entry name is the repository name, so the rule (rules/ocx-baseline.md) and the
+# skill (skills/ocx-baseline/) get distinct repositories: ocx-baseline-rule and ocx-baseline.
+[rules.ocx-baseline-rule]
+path = "rules/ocx-baseline.md"
 
 [skills.ocx-baseline]

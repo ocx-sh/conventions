@@ -93,7 +93,20 @@ def test_existing_agents_md_is_not_overwritten(adopt, dest):
     git(dest, "add", "-A")
     git(dest, "commit", "-q", "-m", "agents")
     assert adopt().returncode == 0, "C-024 adopt must succeed"
-    assert (dest / "AGENTS.md").read_text() == "mine\n", "C-024 an existing AGENTS.md must be left alone"
+    text = (dest / "AGENTS.md").read_text()
+    assert text.startswith("mine\n"), "C-024 an existing AGENTS.md keeps its own content"
+    assert "## Imported from CLAUDE.md" in text and BIG_CLAUDE in text, "C-024 CLAUDE.md content must be appended to the existing AGENTS.md, not lost"
+    assert (dest / "CLAUDE.md").read_text().strip() == "@AGENTS.md", "C-024 CLAUDE.md must be the one-line pointer"
+    assert git(dest, "diff", "--cached", "--name-only", "HEAD").stdout.split().count("AGENTS.md") == 1, "C-024 the AGENTS.md edit must be staged"
+
+
+def test_pointer_only_claude_md_adds_nothing_to_existing_agents_md(adopt, dest):
+    (dest / "AGENTS.md").write_text("mine\n")
+    (dest / "CLAUDE.md").write_text("@AGENTS.md\n")
+    git(dest, "add", "-A")
+    git(dest, "commit", "-q", "-m", "agents")
+    assert adopt().returncode == 0, "C-024 adopt must succeed"
+    assert (dest / "AGENTS.md").read_text() == "mine\n", "C-024 a pointer-only CLAUDE.md must not be imported"
 
 
 def test_dirty_dest_refused_without_changes(adopt, dest):

@@ -7,13 +7,14 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
 import pytest
 import yaml
 
-from conftest import FIXTURES, REPO_ROOT, git_env_dict, ocx_task, render_to, run
+from conftest import FIXTURES, REPO_ROOT, git_env_dict, ocx_lock_committed, ocx_task, render_to, run
 
 ALL = ["full-bazel-site", "full-python-site", "full-minimal", "mirror"]
 FULL = ["full-bazel-site", "full-python-site", "full-minimal"]
@@ -222,6 +223,16 @@ def test_c005_ocx_toml_pins_and_baseline_tools(rendered, name):
     assert groups <= set(ROLES), f"C-005: groups {sorted(groups - set(ROLES))} are outside {ROLES}"
 
 
+@pytest.mark.parametrize("name", FULL)
+def test_c005_every_group_a_workflow_requests_is_declared(rendered, name):
+    repo = rendered(name)
+    declared = {"default"} | set(load_toml("C-005", repo, "ocx.toml").get("group") or {})
+    for fname, raw in all_workflows(repo):
+        for m in re.finditer(r"^\s*groups:\s*(\S+)\s*$", raw, re.M):
+            missing = set(m.group(1).split(",")) - declared
+            assert not missing, f"C-005: {fname} requests ocx groups {sorted(missing)} that ocx.toml does not declare (ocx exits 64: unknown group)"
+
+
 def _mutate_ocx_toml(repo, fn):
     p = need("C-005", repo, "ocx.toml")
     p.write_text(fn(p.read_text()))
@@ -317,6 +328,8 @@ def test_c007_prek_config(rendered, name):
     assert gl and "--staged" in hook_argv(gl[0]) and "--redact" in hook_argv(gl[0]), \
         "C-007: a local hook must run `gitleaks git --staged --redact`"
     assert [h for h in hooks if "commit-msg" in h.get("stages", [])], "C-007: a hook with stages: [commit-msg] (conventional subject check) is missing"
+    shells = [h["id"] for h in hooks if hook_argv(h)[0] in ("sh", "bash", "zsh", "dash", "cmd", "powershell", "pwsh")]
+    assert not shells, f"C-007 (Q9): hook entries must be shell-free so they run on Windows; shell entries: {shells}"
 
 
 TYPES = "feat fix docs style refactor perf test build ci chore revert".split()
@@ -328,6 +341,7 @@ def test_c007_commit_msg_hook_enforces_conventional_subject(rendered, tmp_path, 
     _, hooks = prek_hooks(repo)
     cm = [h for h in hooks if "commit-msg" in h.get("stages", [])]
     assert cm, "C-007: a hook with stages: [commit-msg] is missing"
+    ocx_lock_committed(repo)  # the entry is `ocx exec -- task hooks:commit-msg`
     msg = tmp_path / "COMMIT_EDITMSG"
     msg.write_text(subject + "\n")
     r = run([*hook_argv(cm[0]), msg], repo, git_env_dict(), check=False, timeout=120)  # prek passes the message file as the last arg
@@ -556,6 +570,18 @@ def test_c012_http_archive_of_ocx_tool_fails_baseline_check(render):
     r = ocx_task(repo, "baseline:check")
     assert r.returncode != 0 and "gitleaks" in r.stdout + r.stderr, \
         f"C-012: baseline:check must fail on http_archive gitleaks (rc={r.returncode})\n{(r.stdout + r.stderr)[-600:]}"
+
+
+def test_c012_http_archive_of_a_lookalike_is_not_an_ocx_tool(render):
+    """`bazel-skylib` and `task-runner` share a prefix with the `bazel` and `task` tools but are other projects."""
+    repo = render("full-bazel-site")
+    p = need("C-012", repo, "MODULE.bazel")
+    p.write_text(p.read_text()
+                 + '\nhttp_archive(name = "bazel_skylib", urls = ["https://github.com/bazelbuild/bazel-skylib/releases/download/1.5.0/bazel-skylib-1.5.0.tar.gz"])\n'
+                 + 'http_archive(name = "runner", urls = ["https://example.com/task-runner/task-runner-1.0.tar.gz"])\n')
+    r = run([sys.executable, REPO_ROOT / "scripts" / "baseline_check.py", "--template", REPO_ROOT, "--repo", repo, "--commit-unresolved"],
+            repo, git_env_dict(), check=False, timeout=300)
+    assert "C-012" not in r.stdout + r.stderr, f"C-012: a lookalike http_archive must not name an ocx tool\n{(r.stdout + r.stderr)[-600:]}"
 
 
 # ---------------------------------------------------------------- C-023

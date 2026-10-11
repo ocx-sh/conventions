@@ -44,6 +44,14 @@ fi
 # Seeds skip existing files, so the rename and the AGENTS.md move must precede copier.
 if git ls-files --error-unmatch Taskfile.yml >/dev/null 2>&1; then git mv Taskfile.yml taskfile.yml; fi
 if [ -f CLAUDE.md ] && [ ! -e AGENTS.md ] && [ "$(grep -c . CLAUDE.md)" -gt 1 ]; then git mv CLAUDE.md AGENTS.md; fi
+# copier --overwrite replaces CLAUDE.md with the pointer: fold real content into the existing AGENTS.md first.
+if [ -f CLAUDE.md ] && [ ! -L CLAUDE.md ] && [ -e AGENTS.md ]; then
+  squashed=$(tr -d '[:space:]' <CLAUDE.md)
+  if [ -n "$squashed" ] && [ "$squashed" != "@AGENTS.md" ]; then
+    { printf '\n## Imported from CLAUDE.md\n\n'; cat CLAUDE.md; } >>AGENTS.md
+    git add AGENTS.md
+  fi
+fi
 
 if command -v uvx >/dev/null 2>&1; then copier=(uvx --from copier==9.18.2 copier); else copier=(copier); fi
 "${copier[@]}" copy --defaults --overwrite --vcs-ref "$ref" --data-file "$tmp/data.json" "$src" .

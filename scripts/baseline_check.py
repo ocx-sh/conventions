@@ -175,6 +175,15 @@ def http_calls(text):
         yield text[m.end():i]
 
 
+def names_tool(segments, tool):
+    """True when a URL path segment is the tool (`bazelisk`), or its release asset (`cmake-3.28.0-linux.tar.gz`, `go1.22.linux-amd64`).
+
+    Whole segments only: `bazel-skylib` and `task-runner` are other projects, not the `bazel` and `task` tools.
+    """
+    pat = re.compile(rf"{re.escape(tool)}(?:[-_.]?v?\d.*|[-_](?:linux|darwin|macos|osx|windows|win)\b.*|\.(?:tar|zip|tgz|gz|exe)\b.*)?", re.I)
+    return any(pat.fullmatch(seg) for seg in segments)
+
+
 def check_bazel(repo, tmpl, ans, fails):
     """C-012 (D-12): rules_ocx at an exact version, no http_archive for a tool ocx already ships."""
     if not conditions(ans)["bazel"]:
@@ -200,9 +209,9 @@ def check_bazel(repo, tmpl, ans, fails):
             continue
         for body in http_calls(text):
             for url in re.findall(r"https?://[^\s\"']+", body):
-                path = url.split("//", 1)[1].split("/", 1)[-1].lower()
+                segs = url.split("//", 1)[1].split("?", 1)[0].split("/")[1:]
                 for tool in repos:
-                    if re.search(rf"(?<![a-z0-9_-]){re.escape(tool)}(?![a-z])", path):
+                    if names_tool(segs, tool):
                         fails.append(f"C-012: {f}: http_archive/http_file {url} names ocx tool '{tool}'; use rules_ocx instead (D-12)")
 
 
