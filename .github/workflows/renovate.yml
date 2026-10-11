@@ -1,5 +1,5 @@
 # Self-hosted Renovate runner (D-03). Hosted Renovate cannot run `ocx lock`, so
-# adopted repos are served from here: one App token, postUpgradeTasks, our copier.
+# adopted repos are served from here: one scoped App token per owner, postUpgradeTasks, our copier.
 name: renovate
 
 on:
@@ -14,11 +14,51 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.fleet.outputs.matrix }}
+      has-repos: ${{ steps.fleet.outputs.has-repos }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Adopted repositories from fleet.toml, grouped by owner
+        id: fleet
+        run: |
+          python3 - >> "$GITHUB_OUTPUT" <<'PY'
+          import json, tomllib
+          fleet = tomllib.load(open("fleet.toml", "rb"))["repos"]
+          by_owner = {}
+          for v in fleet.values():
+              if v.get("adopted") and not v.get("excluded"):
+                  owner, name = v["repo"].split("/", 1)
+                  by_owner.setdefault(owner, []).append(name)
+          include = [{"owner": o, "repos": json.dumps(sorted(f"{o}/{n}" for n in ns)), "names": "\n".join(sorted(ns))}
+                     for o, ns in sorted(by_owner.items())]
+          print("matrix=" + json.dumps({"include": include}))
+          print("has-repos=" + ("true" if include else "false"))
+          PY
+          if ! grep -q '^has-repos=true' "$GITHUB_OUTPUT"; then
+            echo "::notice::no repo in fleet.toml has adopted = true; nothing to renovate"
+          fi
+
   renovate:
+    needs: plan
+    if: needs.plan.outputs.has-repos == 'true'
+    name: renovate (${{ matrix.owner }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
       - name: Skip without Renovate App credentials
         id: gate
@@ -39,40 +79,44 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Adopted repositories from fleet.toml
-        id: fleet
+      - name: Setup ocx (ocx, uv for copier, node for Renovate)
         if: steps.gate.outputs.enabled == 'true'
-        run: |
-          repos=$(python3 -c 'import json,tomllib; f=tomllib.load(open("fleet.toml","rb"))["repos"]; print(json.dumps(sorted(v["repo"] for v in f.values() if v.get("adopted") and not v.get("excluded"))))')
-          echo "repos=$repos" >> "$GITHUB_OUTPUT"
-          if [ "$repos" = "[]" ]; then
-            echo "::notice::no repo in fleet.toml has adopted = true; nothing to renovate"
-          fi
-
-      - name: Setup ocx (ocx, node for Renovate, uv for uvx copier)
-        if: steps.gate.outputs.enabled == 'true' && steps.fleet.outputs.repos != '[]'
         uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e # v1.4.0
         with:
           version: 0.6.5
           groups: default,lint,docs
 
+      - name: Install copier (Renovate's copier manager runs it from PATH)
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          version=$(sed -n 's/^ *COPIER_VERSION: "\([^"]*\)".*/\1/p' taskfiles/baseline.taskfile.yml)
+          uv tool install "copier==${version:?COPIER_VERSION not found in taskfiles/baseline.taskfile.yml}"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
       - name: Create Renovate App token
         id: token
-        if: steps.gate.outputs.enabled == 'true' && steps.fleet.outputs.repos != '[]'
+        if: steps.gate.outputs.enabled == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ secrets.RENOVATE_APP_ID }}
           private-key: ${{ secrets.RENOVATE_APP_KEY }}
-          owner: ${{ github.repository_owner }}
+          owner: ${{ matrix.owner }}
+          repositories: ${{ matrix.names }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+          permission-issues: write
+          permission-metadata: read
 
       - name: Run Renovate
-        if: steps.gate.outputs.enabled == 'true' && steps.fleet.outputs.repos != '[]'
+        if: steps.gate.outputs.enabled == 'true'
         env:
           RENOVATE_TOKEN: ${{ steps.token.outputs.token }}
           RENOVATE_PLATFORM: github
-          RENOVATE_REPOSITORIES: ${{ steps.fleet.outputs.repos }}
+          RENOVATE_REPOSITORIES: ${{ matrix.repos }}
           RENOVATE_ONBOARDING: "false"
           RENOVATE_REQUIRE_CONFIG: required
-          RENOVATE_ALLOWED_COMMANDS: '["^ocx lock$", "^bazel mod deps$", "^uvx --from copier==[0-9.]+ copier "]'
+          # postUpgradeTasks only; the copier manager execs `copier update` directly and is not gated by this list.
+          RENOVATE_ALLOWED_COMMANDS: '["^ocx lock$", "^bazel mod deps$"]'
           LOG_LEVEL: info
         run: npx --yes renovate@44.151.0

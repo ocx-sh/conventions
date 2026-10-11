@@ -45,7 +45,7 @@
         "/(^|/)taskfiles/baseline\\.taskfile\\.yml$/"
       ],
       "matchStrings": [
-        "^\\s+(?<depName>COPIER|ZIZMOR)_VERSION: \"(?<currentValue>[^\"]+)\""
+        "(?<depName>COPIER|ZIZMOR)_VERSION: \"(?<currentValue>[^\"]+)\""
       ],
       "depNameTemplate": "{{{lowercase depName}}}",
       "datasourceTemplate": "pypi"
@@ -77,13 +77,25 @@
     },
     {
       "description": [
+        "Template-owned workflows (verify-basic, verify-deep, claude, deploy-site) move only via copier update; a Renovate pin bump fails baseline:check"
+      ],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchFileNames": [
+        ".github/workflows/verify-basic.yml",
+        ".github/workflows/verify-deep.yml",
+        ".github/workflows/claude.yml",
+        ".github/workflows/deploy-site.yml"
+      ],
+      "enabled": false
+    },
+    {
+      "description": [
         "Bump the ocx.toml pin and ocx.lock together (S-007)"
       ],
       "matchManagers": [
         "custom.regex"
-      ],
-      "matchPackageNames": [
-        "ocx.sh/**"
       ],
       "postUpgradeTasks": {
         "commands": [
@@ -93,7 +105,10 @@
           "ocx.lock"
         ],
         "executionMode": "branch"
-      }
+      },
+      "matchDepNames": [
+        "ocx.sh/**"
+      ]
     },
     {
       "description": [

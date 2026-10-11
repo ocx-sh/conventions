@@ -47,7 +47,8 @@ def strings(node):
 
 
 def py_re(js):
-    return re.compile(js.replace("(?<", "(?P<").replace("(?P<=", "(?<=").replace("(?P<!", "(?<!"), re.M)
+    # No re.M: Renovate matchStrings are not multiline, so `^` only anchors at the start of the file.
+    return re.compile(js.replace("(?<", "(?P<").replace("(?P<=", "(?<=").replace("(?P<!", "(?<!"))
 
 
 def managers(cfg):
@@ -165,6 +166,58 @@ def test_default_other_managers():
     assert grouped, "C-015 ocx-sh/website deploy action must be grouped with @ocx-sh/theme"
 
 
+PRESETS = pytest.mark.parametrize("path", [DEFAULT, MIRROR], ids=lambda p: p.stem)
+
+
+def extract(manager, content):
+    return [(h.groupdict().get("depName"), h.groupdict().get("currentValue"))
+            for ms in manager["matchStrings"] for h in py_re(ms).finditer(content)]
+
+
+def glob_re(glob):
+    return re.compile("".join(".*" if t == "**" else "[^/]*" if t == "*" else re.escape(t) for t in re.split(r"(\*\*|\*)", glob)) + r"\Z")
+
+
+@PRESETS
+def test_copier_zizmor_manager_extracts_real_taskfile(path):
+    cfg = load(path)
+    m = next((m for m in managers(cfg) if "COPIER_VERSION" in json.dumps(m)), None)
+    assert m, "C-015/D-01 regex manager for COPIER_VERSION/ZIZMOR_VERSION required"
+    for rel in ("template/taskfiles/baseline.taskfile.yml", "taskfiles/baseline.taskfile.yml"):
+        assert any(re.search(pat.strip("/"), rel) for pat in m["managerFilePatterns"]), f"C-015 manager must target {rel}"
+    tf = REPO_ROOT / "template" / "taskfiles" / "baseline.taskfile.yml"
+    want = yaml.safe_load(tf.read_text())["vars"]
+    found = set(extract(m, tf.read_text()))
+    assert {("COPIER", want["COPIER_VERSION"]), ("ZIZMOR", want["ZIZMOR_VERSION"])} <= found, \
+        f"C-015 manager must extract both versions from the real baseline taskfile (non-multiline); got {found}"
+
+
+@PRESETS
+def test_ocx_lock_rule_matches_extracted_dep_names(path):
+    cfg = load(path)
+    m = ocx_manager(cfg)
+    rule = next((r for r in cfg["packageRules"] if "ocx lock" in json.dumps(r.get("postUpgradeTasks", {}))), None)
+    assert rule, "C-015 a packageRule must run `ocx lock`"
+    assert "custom.regex" in rule.get("matchManagers", []), "C-015 ocx lock rule must target the custom.regex manager"
+    # packageNameTemplate rewrites packageName to ghcr.io/..., so only depName selectors can match.
+    assert "matchPackageNames" not in rule and rule.get("matchDepNames"), "C-015 ocx lock rule must select by matchDepNames"
+    deps = [d for d, _ in extract(m, (FIXTURES / "pin-exact" / "ocx.exact.toml").read_text())]
+    assert deps and all(any(glob_re(g).match(d) for g in rule["matchDepNames"]) for d in deps), \
+        f"C-015 ocx lock selector {rule['matchDepNames']} must match extracted depNames {deps}"
+
+
+@PRESETS
+def test_template_owned_workflows_excluded_from_github_actions(path):
+    cfg = load(path)
+    manifest = tomllib.loads((REPO_ROOT / "MANIFEST.toml").read_text())["file"]
+    owned = [f["path"] for f in manifest if f["class"] == "template-owned" and f["path"].startswith(".github/workflows/")]
+    assert owned, "MANIFEST.toml must list template-owned workflows"
+    off = [r for r in cfg["packageRules"] if r.get("enabled") is False and "github-actions" in r.get("matchManagers", []) and r.get("matchFileNames")]
+    covered = lambda f: any(glob_re(g).match(f) for r in off for g in r["matchFileNames"])
+    assert all(covered(f) for f in owned), f"C-015/D-02 template-owned workflows must be disabled for github-actions: {[f for f in owned if not covered(f)]}"
+    assert not covered(".github/workflows/publish.yml"), "C-015 repo-owned workflows stay Renovate-managed"
+
+
 def test_mirror_has_no_npm_or_bazel():
     cfg = load(MIRROR)
     text = json.dumps(cfg)
@@ -210,3 +263,20 @@ def test_runner_repositories_from_fleet_toml():
     assert "ocx lock" in text, "C-016/D-03 allowedCommands must include `ocx lock`"
     fleet = tomllib.loads((REPO_ROOT / "fleet.toml").read_text())
     assert all("adopted" in v for v in fleet["repos"].values()), "C-016 fleet.toml needs an `adopted` flag on every repo"
+
+
+def test_runner_token_scoped_per_owner_with_explicit_permissions():
+    wf = load_wf()
+    tok = next(s for s in all_steps(wf) if str(s.get("uses", "")).startswith("actions/create-github-app-token@"))["with"]
+    assert "matrix.owner" in tok.get("owner", "") and "matrix.names" in tok.get("repositories", ""), \
+        f"C-016 token must be scoped to the matrix owner and its repositories: {tok}"
+    perms = {k: v for k, v in tok.items() if k.startswith("permission-")}
+    assert perms == {"permission-contents": "write", "permission-pull-requests": "write", "permission-workflows": "write",
+                     "permission-issues": "write", "permission-metadata": "read"}, f"C-016 explicit token permissions: {perms}"
+
+
+def test_runner_installs_copier_and_allows_only_postupgrade_commands():
+    wf = load_wf()
+    text = WORKFLOW.read_text()
+    assert any("uv tool install" in str(s.get("run", "")) and "copier" in str(s.get("run", "")) for s in all_steps(wf)), "C-016 copier must be installed in the job"
+    assert "uvx" not in text.split("RENOVATE_ALLOWED_COMMANDS")[1].splitlines()[0], "C-016 allowedCommands must not carry a dead uvx entry"
