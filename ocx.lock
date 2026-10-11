@@ -1,9 +1,21 @@
 [metadata]
 lock_version = 3
 declaration_hash_version = 1
-declaration_hash = "sha256:dc49b9180585367c239393de8d616ce48b8f8d271fbec72a7363a49d24f9674d"
+declaration_hash = "sha256:c90557cfcc5311a1487cb7372bd04131ae7c652bcfba23b781465c54df1449b5"
 generated_by = "ocx 0.6.5"
-generated_at = "2026-10-11T18:54:10Z"
+generated_at = "2026-10-11T20:08:13Z"
+
+[[tool]]
+name = "bazelisk"
+group = "build"
+repository = "ocx.sh/bazelbuild/bazelisk"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:c920f542fa7663d80fbb2d22e9f8b36f1d62761300db19969a30c17f4d9e7ca0"
+"darwin/arm64" = "sha256:9b555b708a525c8460d9e5989ded5fb59e066c5774db9b608b63ff5b6fe2fa27"
+"linux/amd64" = "sha256:1736f19f619f6ad3d64e37bc214695222884145f25cef13fc0b28338e951b47c"
+"linux/arm64" = "sha256:3ea20a8979c478b25403cae334bd47be36f50f943bde075e7ec1f585adcccd4c"
+"windows/amd64" = "sha256:1cf9894fbc44c18bfb21f035a20656b3d318b6c248cd19622702911082f4f4f3"
 
 [[tool]]
 name = "task"
