@@ -88,6 +88,15 @@ jobs:
           version: 0.6.5
           groups: default,lint,docs,build
 
+      # Group tools are not on PATH after setup-ocx; Renovate and its postUpgradeTasks need uv, node and bazel there.
+      - name: Put group tools on PATH (uv, node, bazelisk as bazel)
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          ocx exec -g lint,docs,build -- printenv PATH | tr ':' '\n' | grep '/\.ocx/toolchain/links/' >> "$GITHUB_PATH"
+          mkdir -p "$RUNNER_TEMP/bin"
+          ln -sf "$(ocx exec -g build -- sh -c 'command -v bazelisk')" "$RUNNER_TEMP/bin/bazel"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
       - name: Install copier (Renovate's copier manager runs it from PATH)
         if: steps.gate.outputs.enabled == 'true'
         run: |
