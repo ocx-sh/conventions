@@ -504,8 +504,7 @@ def test_c013_claude_workflow(rendered, name):
     assert "secrets.CLAUDE_CODE_OAUTH_TOKEN" in raw, "C-013: must reference secrets.CLAUDE_CODE_OAUTH_TOKEN"
     jobs = yaml.safe_load(raw)["jobs"]
     for jname, job in jobs.items():
-        if "secrets." in yaml.safe_dump(job):
-            assert job.get("environment") == "ci", f"C-013: claude.yml job {jname} reads a secret, so it needs environment: ci"
+        assert "environment" not in job, f"C-013: claude.yml job {jname} must not use an environment (CLAUDE_CODE_OAUTH_TOKEN is an org secret)"
     review = jobs["review"]
     assert "!endsWith(github.actor, '[bot]')" in review["if"], \
         "C-013: review job must skip bot actors (!endsWith(github.actor, '[bot]'))"
@@ -525,18 +524,24 @@ def test_c013_responder_is_least_privilege(rendered):
     assert "id-token" not in job["permissions"], "C-013: responder with an explicit token needs no id-token: write"
 
 
-def test_c009_bazel_write_credential_only_in_default_branch_environment(rendered):
-    raw = need("C-009", rendered("full-bazel-site"), ".github/workflows/verify-basic.yml").read_text()
-    build = yaml.safe_load(raw)["jobs"]["build"]
-    env = build["environment"]
-    assert "'ci-write'" in env and "'ci'" in env and "default_branch" in env and "github.event_name == 'push'" in env, \
-        f"C-009: build must pick environment ci-write only for a push to the default branch, else ci: {env!r}"
-    write = [s for s in steps(build) if "BAZEL_CACHE_WRITE_AUTH" in yaml.safe_dump(s)]
-    assert write and all("github.event_name == 'push'" in yaml.safe_dump(s) for s in write), "C-009: the write credential is only passed on push"
-    for fname, text in all_workflows(rendered("full-bazel-site")):
+def test_c009_bazel_write_credential_only_on_push_to_main(rendered):
+    repo = rendered("full-bazel-site")
+    push_main = "github.event_name == 'push' && github.ref == 'refs/heads/main'"
+    build = yaml.safe_load(need("C-009", repo, ".github/workflows/verify-basic.yml").read_text())["jobs"]["build"]
+    setup = [s for s in steps(build) if "BAZEL_CACHE_WRITE_AUTH" in yaml.safe_dump(s)]
+    assert setup, "C-009: build must pass the cache credentials to the setup action"
+    with_ = setup[0]["with"]
+    assert push_main in with_["cache-write-auth"] and "secrets.BAZEL_CACHE_WRITE_AUTH" in with_["cache-write-auth"], \
+        f"C-009: the write credential is passed only on a push to main: {with_['cache-write-auth']!r}"
+    assert push_main in with_["cache-read-auth"] and "!(" in with_["cache-read-auth"], \
+        f"C-009: the read credential is passed everywhere except a push to main: {with_['cache-read-auth']!r}"
+    for fname, text in all_workflows(repo):
         for jname, job in (yaml.safe_load(text).get("jobs") or {}).items():
+            if "BAZEL_CACHE" in yaml.safe_dump(job) or "OTEL_OTLP_AUTH" in yaml.safe_dump(job):
+                assert "environment" not in job, f"C-009: {fname} job {jname} reads org secrets, so it must not use an environment"
+                assert "OTEL_AUTH" not in yaml.safe_dump(job), f"C-011: {fname} job {jname} still reads OTEL_AUTH, renamed OTEL_OTLP_AUTH"
             if "BAZEL_CACHE_WRITE_AUTH" in yaml.safe_dump(job):
-                assert "ci-write" in str(job.get("environment")), f"C-009: {fname} job {jname} reads BAZEL_CACHE_WRITE_AUTH outside ci-write"
+                assert push_main in yaml.safe_dump(job).replace("\n", " "), f"C-009: {fname} job {jname} reads BAZEL_CACHE_WRITE_AUTH outside a push to main"
 
 
 def test_checkout_pin_is_uniform(rendered):

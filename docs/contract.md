@@ -76,15 +76,17 @@ All: top-level `permissions: {}`, every `uses:` a 40-hex SHA with `# vX`, checko
 |---|---|---|
 | `lint` | setup (`groups: default,lint`) → `task ci:lint`, `task lock:check`, `task baseline:check`, `task secrets`, actionlint, zizmor | always |
 | `test` | setup (`default,test`) → `task ci:test`; JUnit to job summary + check annotations (fork-safe `annotate_only`) | full |
-| `build` | setup (`default,build`) → `task ci:build`; environment `ci-write` on a push to the default branch, else `ci` | `bazel` |
+| `build` | setup (`default,build`) → `task ci:build`; org secrets, write credential only on a push to `main`, else the read credential | `bazel` |
 | `docs` | setup (`default,docs`) → `task ci:docs` | `site` |
 | `basic-gate` | `if: always()`; fails unless every needed job succeeded or was skipped by answer. The single required check. | always |
 
 The mirror profile renders `lint` and `basic-gate` only.
 
-Every job that reads a secret runs in an environment. `BAZEL_CACHE_WRITE_AUTH` exists only in the
-`ci-write` environment (deployment branches limited to the default branch); `ci` holds the read-only
-cache credential and `OTEL_AUTH`, and is what PR jobs receive.
+No job uses a GitHub environment for cache or telemetry credentials: `BAZEL_CACHE_READ_AUTH`,
+`BAZEL_CACHE_WRITE_AUTH` and `OTEL_OTLP_AUTH` are org secrets. The `build` job passes the write
+credential only on `github.event_name == 'push' && github.ref == 'refs/heads/main'` and the read
+credential everywhere else; OTel export happens only when `OTEL_OTLP_AUTH` is non-empty, so fork PRs
+and runs without the secrets stay green. (The `renovate` and `ocx.sh` environments are separate.)
 
 **`verify-deep.yml`** (full) — triggers `schedule` (daily 03:MM UTC, `MM = int(sha256(repo_name)[:4], 16) % 60`),
 `workflow_dispatch`, `workflow_call`, and `pull_request: types: [labeled]` gated on label `run-deep`.
