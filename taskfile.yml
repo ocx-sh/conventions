@@ -1,6 +1,8 @@
 # Seeded once by ocx-sh/conventions; this file belongs to the repo from here on.
 # The baseline tasks (setup, lock:check, secrets, baseline:check, release:prepare,
 # copier:update, ...) come from the template-owned taskfile below.
+# Group tools (uv) are not on PATH after CI's `default,<role>` install: reach them
+# with `ocx exec -g <group> --`, as the baseline tasks do.
 version: '3'
 
 includes:
@@ -26,13 +28,13 @@ tasks:
   ci:lint:
     desc: Byte-compile the Python sources (the repo's lint)
     cmds:
-      - uv run python -m compileall -q scripts drift tests
+      - ocx exec -g lint -- uv run python -m compileall -q scripts drift tests
 
   ci:test:
     desc: Fast self-tests (JUnit XML goes to target/reports/junit/)
     cmds:
       - mkdir -p target/reports/junit
-      - uv run pytest -m "not slow" -q --junitxml=target/reports/junit/unit.xml
+      - ocx exec -g test -- uv run pytest -m "not slow" -q --junitxml=target/reports/junit/unit.xml
 
   ci:build:
     desc: Build (nothing to build in this repo)
@@ -48,7 +50,7 @@ tasks:
     desc: Deep tier (nightly verify-deep); renders fixtures and runs task setup/verify
     cmds:
       - mkdir -p target/reports/junit
-      - uv run pytest -m slow -q --junitxml=target/reports/junit/deep.xml
+      - ocx exec -g test -- uv run pytest -m slow -q --junitxml=target/reports/junit/deep.xml
 
   test:slow:
     desc: Alias for ci:deep
