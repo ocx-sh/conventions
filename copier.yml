@@ -61,20 +61,20 @@ languages:
 site:
   type: yaml
   help: >-
-    null, or a mapping {dir, dist, deploy (bool), path (optional str, may be empty)}
+    null, or a mapping {dir, dist, deploy (bool), path (optional str, may be empty), paths (optional list of str: extra deploy trigger globs)}
     describing the site build and Bunny deploy.
   default: null
   when: "{{ profile == 'full' }}"
   validator: >-
     {%- if site is not none -%}
     {%- if site is not mapping -%}
-    site must be null or a mapping with keys dir, dist, deploy, path.
+    site must be null or a mapping with keys dir, dist, deploy, path, paths.
     {%- else -%}
     {%- for k in ['dir', 'dist', 'deploy'] if k not in site -%}
     site.{{ k }} is required.{{ ' ' }}
     {%- endfor -%}
-    {%- for k in site if k not in ['dir', 'dist', 'deploy', 'path'] -%}
-    Unknown site key '{{ k }}'; allowed: dir, dist, deploy, path.{{ ' ' }}
+    {%- for k in site if k not in ['dir', 'dist', 'deploy', 'path', 'paths'] -%}
+    Unknown site key '{{ k }}'; allowed: dir, dist, deploy, path, paths.{{ ' ' }}
     {%- endfor -%}
     {%- if 'deploy' in site and site.deploy is not boolean -%}
     site.deploy must be a boolean.{{ ' ' }}
@@ -82,6 +82,13 @@ site:
     {%- for k in ['dir', 'dist', 'path'] if k in site and site[k] is not string -%}
     site.{{ k }} must be a string.{{ ' ' }}
     {%- endfor -%}
+    {%- if 'paths' in site and (site.paths is string or site.paths is not iterable or site.paths is mapping) -%}
+    site.paths must be a list of strings.{{ ' ' }}
+    {%- else -%}
+    {%- for p in site.get('paths', []) if p is not string -%}
+    site.paths must be a list of strings.{{ ' ' }}
+    {%- endfor -%}
+    {%- endif -%}
     {%- endif -%}
     {%- endif -%}
 

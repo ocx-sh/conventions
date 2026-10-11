@@ -8,6 +8,11 @@ on:
     branches: [main]
     paths:
       - "{{ site.dir }}/**"
+      - ocx.toml
+      - ocx.lock
+{%- for p in site.get('paths', []) %}
+      - "{{ p }}"
+{%- endfor %}
   workflow_dispatch:
 
 permissions: {}

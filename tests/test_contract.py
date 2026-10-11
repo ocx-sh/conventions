@@ -400,6 +400,9 @@ def test_c009_verify_basic_shape(rendered, name):
         assert f"task ci:{role}" in job_runs(job), f"C-009: job {role} must run `task ci:{role}`"
     for cmd in ["task lock:check", "task baseline:check", "task secrets", "actionlint", "zizmor"]:
         assert cmd in job_runs(jobs["lint"]), f"C-009: lint job must run `{cmd}`"
+    lint_checkout = [s for s in steps(jobs["lint"]) if str(s.get("uses", "")).startswith("actions/checkout@")]
+    assert lint_checkout and (lint_checkout[0].get("with") or {}).get("fetch-depth") == 0, \
+        "C-009: lint checkout needs fetch-depth: 0 (task secrets scans git history)"
 
 
 def nightly_minute(repo_name):
@@ -442,6 +445,21 @@ def test_c014_deploy_site_iff_site_deploy(rendered, name):
     if a["site"].get("path"):
         assert a["site"]["path"] in raw, "C-014: deploy inputs must carry site.path"
     assert "BUNNY_STORAGE_KEY" in raw, "C-014: deploy must pass secrets.BUNNY_STORAGE_KEY"
+    want = [f"{a['site']['dir']}/**", "ocx.toml", "ocx.lock", *a["site"].get("paths", [])]
+    assert trig["push"].get("paths") == want, f"C-014: deploy-site push paths {trig['push'].get('paths')} != {want}"
+
+
+def test_c014_site_paths_extend_deploy_triggers(render):
+    repo = render("full-python-site", extra_data={
+        "site": "{dir: site, dist: site/dist, deploy: true, path: /x, paths: ['docs/**']}"})
+    trig = triggers(yaml.safe_load((repo / ".github/workflows/deploy-site.yml").read_text()))
+    assert trig["push"]["paths"] == ["site/**", "ocx.toml", "ocx.lock", "docs/**"], \
+        f"C-014: site.paths must extend the deploy-site push paths, got {trig['push']['paths']}"
+
+
+def test_c001_site_paths_must_be_list_of_strings(render):
+    with pytest.raises(subprocess.CalledProcessError):
+        render("full-python-site", extra_data={"site": "{dir: site, dist: site/dist, deploy: true, paths: docs}"})
 
 
 @pytest.mark.parametrize("name", FULL)
@@ -452,6 +470,17 @@ def test_c013_claude_workflow(rendered, name):
     assert set(trig["pull_request"].get("types", [])) == {"opened", "synchronize", "ready_for_review"}, "C-013: pull_request types must be opened, synchronize, ready_for_review"
     assert {"issue_comment", "pull_request_review_comment"} <= set(trig), "C-013: @claude responder triggers missing"
     assert "secrets.CLAUDE_CODE_OAUTH_TOKEN" in raw, "C-013: must reference secrets.CLAUDE_CODE_OAUTH_TOKEN"
+    jobs = yaml.safe_load(raw)["jobs"]
+    for jname, job in jobs.items():
+        if "secrets." in yaml.safe_dump(job):
+            assert job.get("environment") == "ci", f"C-013: claude.yml job {jname} reads a secret, so it needs environment: ci"
+    review = jobs["review"]
+    assert "!endsWith(github.actor, '[bot]')" in review["if"], \
+        "C-013: review job must skip bot actors (!endsWith(github.actor, '[bot]'))"
+    action = [s for s in steps(review) if "claude-code-action" in str(s.get("uses", ""))][0]["with"]
+    assert action.get("prompt", "").strip(), "C-013: review job needs a `prompt:` (agent mode never reviews without one)"
+    assert "--allowedTools" in action.get("claude_args", "") and "gh pr comment" in action["claude_args"], \
+        "C-013: review job claude_args must allow the PR comment tools"
 
 
 def expected_setup_sha(repo):

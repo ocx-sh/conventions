@@ -30,7 +30,7 @@ excluded = false
 repo_name = "rules_ocx"
 profile = "full"
 bazel = true
-site = { dir = "site", dist = "site/dist", deploy = true, path = "/integrations/bazel" }  # deploy.yml passes no path; Astro base /integrations/bazel/
+site = { dir = "site", dist = "site/dist", deploy = true, path = "/integrations/bazel", paths = ["docs/**"] }  # deploy.yml passes no path; Astro base /integrations/bazel/
 languages = ["bazel", "shell", "typescript"]
 deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
 theme_bundle = true
