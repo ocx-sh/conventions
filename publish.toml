@@ -1,0 +1,29 @@
+# `grim publish` manifest for the conventions baseline (schema:
+# `grim schema --kind publish`). They publish into the OCX conventions catalog,
+# flat: ghcr.io/ocx-sh/conventions/<name>.
+#
+# NO `version` here, on purpose: every release tag vX.Y.Z runs
+# `grim publish --version vX.Y.Z` from the repo root (the default
+# `version_prefix` "v" strips the v). An entry without a version from any
+# source fails the manifest, so a forgotten flag cannot publish.
+# Validate locally: `ocx exec -g lint -- grim publish --dry-run --version 0.0.0`.
+registry = "ghcr.io"
+repository_prefix = "ocx-sh/conventions"
+
+# Fills only what an artifact leaves unset. `license` is passed on the CLI.
+[metadata]
+authors = "The OCX Authors"
+vendor = "OCX"
+repository = "https://github.com/ocx-sh/conventions"
+
+[support]
+issues = "https://github.com/ocx-sh/conventions/issues"
+security = "https://github.com/ocx-sh/conventions/security"
+
+[description]
+readme = "README.md"
+
+# Conventional paths: rules/<name>.md, skills/<name>/.
+[rules.ocx-baseline]
+
+[skills.ocx-baseline]

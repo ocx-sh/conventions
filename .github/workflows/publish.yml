@@ -1,0 +1,47 @@
+name: Publish
+
+# A release tag vX.Y.Z publishes the baseline rule and skill to
+# ghcr.io/ocx-sh/conventions at the same version. Only the owner creates tags;
+# the workflow never runs for anything else.
+on:
+  push:
+    tags: ['v*']
+
+permissions: {}
+
+jobs:
+  grim:
+    name: Publish grim artifacts
+    # Forks carry the tags too; only the canonical repo publishes.
+    if: github.repository == 'ocx-sh/conventions'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # push the grim artifacts to ghcr.io with GITHUB_TOKEN
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Setup OCX
+        uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e # v1.4.0
+        with:
+          version: '0.6.5'
+          cache: false
+      - name: Log in to ghcr.io
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Per-job credential store in the runner temp dir (wiped after the job);
+        # grim refuses the plaintext write without --allow-insecure-store.
+        run: |
+          export DOCKER_CONFIG="$RUNNER_TEMP/docker"
+          echo "DOCKER_CONFIG=$DOCKER_CONFIG" >> "$GITHUB_ENV"
+          printf '%s' "$GITHUB_TOKEN" | ocx exec -g lint -- grim login ghcr.io -u "$GITHUB_ACTOR" --password-stdin --allow-insecure-store
+      # publish.toml (repo root) names the registry and namespace. --version strips
+      # the leading v and cascades X.Y / X / latest; an existing version is a no-op.
+      # --git embeds the origin remote, which links each ghcr package to this repo.
+      - name: Publish
+        run: ocx exec -g lint -- grim publish --version "${GITHUB_REF_NAME#v}" --git --license Apache-2.0
+      - name: Log out
+        if: always()
+        run: ocx exec -g lint -- grim logout ghcr.io
