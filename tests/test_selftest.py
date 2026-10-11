@@ -5,7 +5,9 @@ that `baseline:check` cannot re-render; run these after the template is committe
 """
 
 import re
+import secrets
 import shutil
+import string
 import tomllib
 from pathlib import Path
 
@@ -72,11 +74,19 @@ def test_d05_stale_grim_lock_fails_grim_check_and_lint_job():
     assert r.returncode != 0, f"C-022: the lint job's `{cmds[0]}` must exit non-zero on a stale grim lock\n{tail(r)}"
 
 
+def planted_creds():
+    # Generated per run: a committed fake key trips GitHub push protection.
+    up = string.ascii_uppercase + string.digits
+    key = "AKIA" + "".join(secrets.choice(up) for _ in range(16))
+    sec = "".join(secrets.choice(string.ascii_letters + string.digits + "+/") for _ in range(40))
+    return f"AWS_ACCESS_KEY_ID={key}\naws_secret_access_key={sec}\n"
+
+
 def test_s002_planted_secret_fails_task_secrets():
     repo = fresh("full-minimal", "planted-secret")
     r = ocx_task(repo, "secrets")
     assert r.returncode == 0, f"S-002: `task secrets` must pass on a clean render (rc={r.returncode})\n{tail(r)}"
-    shutil.copy(FIXTURES / "planted-secret" / "creds.env", repo / "creds.env")
+    (repo / "creds.env").write_text(planted_creds())
     env = git_env_dict()
     run(["git", "add", "creds.env"], repo, env)
     run(["git", "commit", "-qm", "plant secret"], repo, env)
