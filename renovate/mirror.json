@@ -1,0 +1,96 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "OCX baseline Renovate preset (mirror): weekly schedule; chore(deps) commits, ci(deps) for workflow actions."
+  ],
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests",
+    ":semanticCommits"
+  ],
+  "timezone": "UTC",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "semanticCommitType": "chore",
+  "semanticCommitScope": "deps",
+  "copier": {
+    "enabled": true
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": [
+        "ocx.toml exact pins \"ocx.sh/<org>/<pkg>:X.Y.Z\"; ocx.sh is an index, so lookups go to the backing ghcr.io repo (ocx-contrib/<org>/<pkg>, except grimoire/cli and ocx/cli). Build-timestamped tags are not X.Y.Z and stay ignored."
+      ],
+      "managerFilePatterns": [
+        "/(^|/)ocx\\.toml$/"
+      ],
+      "matchStrings": [
+        "\"(?<depName>ocx\\.sh/[^:\"]+):(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$",
+      "packageNameTemplate": "ghcr.io/{{#if (equals depName 'ocx.sh/grimoire/cli')}}grimoire-rs/grimoire/cli{{else}}{{#if (equals depName 'ocx.sh/ocx/cli')}}ocx-sh/ocx/cli{{else}}ocx-contrib/{{{replace 'ocx.sh/' '' depName}}}{{/if}}{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": [
+        "COPIER_VERSION / ZIZMOR_VERSION vars in the template-owned baseline taskfile (D-01)"
+      ],
+      "managerFilePatterns": [
+        "/(^|/)taskfiles/baseline\\.taskfile\\.yml$/"
+      ],
+      "matchStrings": [
+        "^\\s+(?<depName>COPIER|ZIZMOR)_VERSION: \"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "{{{lowercase depName}}}",
+      "datasourceTemplate": "pypi"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": [
+        "Workflow action bumps use ci(deps)"
+      ],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "semanticCommitType": "ci",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "description": [
+        "D-02: template workflows pin ocx-sh/conventions via copier (vcs_ref_hash), never Renovate"
+      ],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchPackageNames": [
+        "ocx-sh/conventions",
+        "ocx-sh/conventions/**"
+      ],
+      "enabled": false
+    },
+    {
+      "description": [
+        "Bump the ocx.toml pin and ocx.lock together (S-007)"
+      ],
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "ocx.sh/**"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "ocx lock"
+        ],
+        "fileFilters": [
+          "ocx.lock"
+        ],
+        "executionMode": "branch"
+      }
+    }
+  ]
+}

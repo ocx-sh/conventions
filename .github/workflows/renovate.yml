@@ -1,0 +1,78 @@
+# Self-hosted Renovate runner (D-03). Hosted Renovate cannot run `ocx lock`, so
+# adopted repos are served from here: one App token, postUpgradeTasks, our copier.
+name: renovate
+
+on:
+  schedule:
+    - cron: "17 * * * 1-5" # hourly on weekdays; the preset's own schedule gates PR creation
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Skip without Renovate App credentials
+        id: gate
+        env:
+          RENOVATE_APP_ID: ${{ secrets.RENOVATE_APP_ID }}
+          RENOVATE_APP_KEY: ${{ secrets.RENOVATE_APP_KEY }}
+        run: |
+          if [ -z "$RENOVATE_APP_ID" ] || [ -z "$RENOVATE_APP_KEY" ]; then
+            echo "::notice::RENOVATE_APP_ID / RENOVATE_APP_KEY not set; skipping the Renovate run"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Adopted repositories from fleet.toml
+        id: fleet
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          repos=$(python3 -c 'import json,tomllib; f=tomllib.load(open("fleet.toml","rb"))["repos"]; print(json.dumps(sorted(v["repo"] for v in f.values() if v.get("adopted") and not v.get("excluded"))))')
+          echo "repos=$repos" >> "$GITHUB_OUTPUT"
+          if [ "$repos" = "[]" ]; then
+            echo "::notice::no repo in fleet.toml has adopted = true; nothing to renovate"
+          fi
+
+      - name: Setup ocx (ocx, node for Renovate, uv for uvx copier)
+        if: steps.gate.outputs.enabled == 'true' && steps.fleet.outputs.repos != '[]'
+        uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e # v1.4.0
+        with:
+          version: 0.6.5
+          groups: default,lint,docs
+
+      - name: Create Renovate App token
+        id: token
+        if: steps.gate.outputs.enabled == 'true' && steps.fleet.outputs.repos != '[]'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.RENOVATE_APP_ID }}
+          private-key: ${{ secrets.RENOVATE_APP_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Run Renovate
+        if: steps.gate.outputs.enabled == 'true' && steps.fleet.outputs.repos != '[]'
+        env:
+          RENOVATE_TOKEN: ${{ steps.token.outputs.token }}
+          RENOVATE_PLATFORM: github
+          RENOVATE_REPOSITORIES: ${{ steps.fleet.outputs.repos }}
+          RENOVATE_ONBOARDING: "false"
+          RENOVATE_REQUIRE_CONFIG: required
+          RENOVATE_ALLOWED_COMMANDS: '["^ocx lock$", "^bazel mod deps$", "^uvx --from copier==[0-9.]+ copier "]'
+          LOG_LEVEL: info
+        run: npx --yes renovate@44.151.0
