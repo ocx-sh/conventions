@@ -35,12 +35,22 @@ def tail(r):
     return (r.stdout + r.stderr)[-800:]
 
 
+def setup_committed(repo):
+    """`task setup`, then commit its grim client output as an adopter does (grim:check fails on uncommitted output)."""
+    r = ocx_task(repo, "setup")
+    env = git_env_dict()
+    run(["git", "add", "-A"], repo, env)
+    run(["git", "commit", "-qm", "chore: commit grim output", "--allow-empty", "--no-verify"], repo, env)  # setup armed the hooks
+    return r
+
+
 @pytest.mark.parametrize("name", ["full-bazel-site", "full-python-site", "full-minimal"])
 def test_c022_full_fixture_setup_and_verify(name):
     repo = fresh(name)
-    for task in ("setup", "verify"):
-        r = ocx_task(repo, task)
-        assert r.returncode == 0, f"C-022: `task {task}` failed for {name} (rc={r.returncode})\n{tail(r)}"
+    r = setup_committed(repo)
+    assert r.returncode == 0, f"C-022: `task setup` failed for {name} (rc={r.returncode})\n{tail(r)}"
+    r = ocx_task(repo, "verify")
+    assert r.returncode == 0, f"C-022: `task verify` failed for {name} (rc={r.returncode})\n{tail(r)}"
 
 
 def test_c022_mirror_fixture_checks():
@@ -51,7 +61,7 @@ def test_c022_mirror_fixture_checks():
 
 def test_d05_stale_grim_lock_fails_grim_check_and_lint_job():
     repo = fresh("full-minimal", "stale-grim-lock")
-    r = ocx_task(repo, "setup")
+    r = setup_committed(repo)
     assert r.returncode == 0, f"D-05: `task setup` failed before the stale-lock edit (rc={r.returncode})\n{tail(r)}"
     r = ocx_task(repo, "grim:check")
     assert r.returncode == 0, f"D-05: grim:check must pass on a fresh install (rc={r.returncode})\n{tail(r)}"

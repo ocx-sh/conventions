@@ -23,7 +23,7 @@ Per-repo delta after `scripts/adopt.sh` and `scripts/pin-exact.py`. Copy, tick, 
 - [ ] `grimoire.toml` clients include claude, codex, opencode
 - [ ] bundles: `docs-essentials`, `code-docs-essentials`, one `<lang>-essentials` per language, `ocx-theme` for sites; floating tags only as the lore convention allows
 - [ ] `AGENTS.md` canonical, `CLAUDE.md` a pointer; `task grim:check` green
-- [ ] grim client output untracked (`python3 $CONV/scripts/untrack_grim.py`); each repo-owned skill or rule it lists moved to `agent-config/` and declared with `grim add ./agent-config/<name>`
+- [ ] `task setup` output committed (grim client dirs, `.claude/settings.json`, `opencode.json`); each hand-written skill or rule in a client dir moved to `agent-config/` and declared with `grim add ./agent-config/<name>`
 
 ## Bazel and sites (when answered)
 - [ ] `MODULE.bazel` has an exact `bazel_dep(name = "rules_ocx", ...)`; ocx tools come through it, not `http_archive`

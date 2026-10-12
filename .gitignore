@@ -4,7 +4,3 @@ target/
 __pycache__/
 .pytest_cache/
 *.pyc
-
-# grim-installed files outside the template's per-client-dir .gitignore files (D-05).
-/.claude/settings.json
-/opencode.json
