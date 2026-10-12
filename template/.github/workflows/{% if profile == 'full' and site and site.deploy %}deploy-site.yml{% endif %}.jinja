@@ -1,4 +1,4 @@
-{%- set ver = ((_copier_conf.vcs_ref or '') | regex_search('^v\\d[^\\s]*')) or 'v0' -%}
+{%- set ver = ((_copier_conf.vcs_ref or '') | regex_search('^v\\d[\\w.]*(?:-[\\w.]+)?$')) or 'v0' -%}
 # ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update
 name: Deploy to ocx.sh
 

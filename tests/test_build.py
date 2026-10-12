@@ -1,5 +1,6 @@
 """src/ -> template/ build (scripts/build_template.py): committed template/ is the build output, banners mark ownership."""
 
+import re
 import subprocess
 import sys
 import tomllib
@@ -36,3 +37,13 @@ def test_banner_marks_template_owned_files_only():
         if f["path"] != ".copier-answers.yml":  # copier writes its own "never edit" header
             assert (BANNER in out.read_text()) == (f["class"] == "template-owned"), \
                 f"{f['path']} ({f['class']}): banner must mark exactly the template-owned files"
+
+
+def test_tag_ref_regex_accepts_real_tags_only():
+    """Version comments and the Renovate preset name a tag only for a tag ref; a describe ref or SHA falls back to the hash."""
+    lit = re.search(r"regex_search\('(.+?)'\)", (REPO_ROOT / "src/renovate.json.jinja").read_text()).group(1)
+    for wf in ("verify-basic", "verify-deep", "deploy-site"):
+        assert f"regex_search('{lit}')" in (REPO_ROOT / f"src/.github/workflows/{wf}.yml.jinja").read_text(), wf
+    pat = lit.replace("\\\\", "\\")
+    for ref, tag in [("v0.1.1", True), ("v1.0.0-rc.1", True), ("v0.1.0-2-g2b1ec3f", False), ("2b1ec3f", False), ("HEAD", False)]:
+        assert bool(re.search(pat, ref)) == tag, ref

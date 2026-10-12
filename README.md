@@ -63,7 +63,7 @@ The task, workflow and preset interface adopters rely on is in [`docs/contract.m
 | `copier.yml` | copier questions | yes |
 | `skills/`, `rules/` | the `ocx-baseline` skill and rule, published with grim (`publish.toml`); adopters install them, copier never copies them | yes |
 | `renovate/`, `.github/actions/setup` | shared Renovate presets and runner, composite setup action | yes |
-| `drift/`, `fleet.toml`, `scripts/` | fleet status page, `adopt.sh`, `baseline_check.py`, `build_template.py`, `untrack_grim.py` | yes |
+| `drift/`, `fleet.toml`, `scripts/` | fleet status page, `adopt.sh`, `baseline_check.py`, `build_template.py` | yes |
 | `tests/` | pytest self-tests; `-m slow` renders fixtures | yes |
 | everything else at the root | this repo's own render of the template; files with the `ocx-baseline: template-owned file` banner come from `src/` | only seeded-once ones |
 

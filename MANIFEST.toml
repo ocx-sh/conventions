@@ -49,27 +49,27 @@ class = "template-owned"
 profiles = ["full", "mirror"]
 
 [[file]]
-path = ".claude/skills/.gitignore"
+path = ".claude/skills/.gitattributes"
 class = "template-owned"
 profiles = ["full", "mirror"]
 
 [[file]]
-path = ".claude/rules/.gitignore"
+path = ".claude/rules/.gitattributes"
 class = "template-owned"
 profiles = ["full", "mirror"]
 
 [[file]]
-path = ".opencode/skills/.gitignore"
+path = ".opencode/skills/.gitattributes"
 class = "template-owned"
 profiles = ["full", "mirror"]
 
 [[file]]
-path = ".opencode/rules/.gitignore"
+path = ".opencode/rules/.gitattributes"
 class = "template-owned"
 profiles = ["full", "mirror"]
 
 [[file]]
-path = ".agents/skills/.gitignore"
+path = ".agents/skills/.gitattributes"
 class = "template-owned"
 profiles = ["full", "mirror"]
 

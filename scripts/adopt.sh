@@ -76,8 +76,3 @@ while IFS= read -r p; do
   # ls-files matches the index case-sensitively: the renamed taskfile.yml is not mistaken for Taskfile.yml.
   [ -z "$p" ] || [ -z "$(git ls-files -- "$p")" ] || git rm -q -- "$p"
 done <<<"$paths"
-
-# Client files grim installs are gitignored output from here on (D-05): untrack the ones grimoire.lock names.
-if [ -f grimoire.lock ]; then
-  python3 "$root/scripts/untrack_grim.py" . || echo "adopt: move the repo-owned files above to agent-config/ and grim add them" >&2
-fi

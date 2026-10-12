@@ -1,4 +1,4 @@
-{%- set ver = ((_copier_conf.vcs_ref or '') | regex_search('^v\\d[^\\s]*')) or 'v0' -%}
+{%- set ver = ((_copier_conf.vcs_ref or '') | regex_search('^v\\d[\\w.]*(?:-[\\w.]+)?$')) or 'v0' -%}
 {%- set setup = 'ocx-sh/conventions/.github/actions/setup@' ~ _copier_conf.vcs_ref_hash ~ ' # ' ~ ver -%}
 {%- set has_bazel = bazel -%}
 # ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update
