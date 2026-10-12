@@ -40,7 +40,7 @@ def setup_committed(repo):
     r = ocx_task(repo, "setup")
     env = git_env_dict()
     run(["git", "add", "-A"], repo, env)
-    run(["git", "commit", "-qm", "setup", "--allow-empty"], repo, env)
+    run(["git", "commit", "-qm", "chore: commit grim output", "--allow-empty", "--no-verify"], repo, env)  # setup armed the hooks
     return r
 
 
