@@ -49,7 +49,7 @@ or root-task contract is broken.
 [`MANIFEST.toml`](MANIFEST.toml) classifies every rendered path:
 
 - template-owned: rewritten on each update, line 1 is the `ocx-baseline: template-owned file` banner (JSON: a `description` key). Change `src/` here, never the copy.
-- seeded-once: written on first copy (`taskfile.yml`, `ocx.toml`, `grimoire.toml`, `AGENTS.md`, `.gitleaks.toml`); the adopting repo owns it afterwards.
+- seeded-once: written on first copy (`taskfile.yml`, `ocx.toml`, `grimoire.toml`, `AGENTS.md`, `.gitleaks.toml`, `.github/renovate-local.json`); the adopting repo owns it afterwards.
 
 The task, workflow and preset interface adopters rely on is in [`docs/contract.md`](docs/contract.md).
 

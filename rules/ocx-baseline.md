@@ -28,7 +28,7 @@ Change `ocx-sh/conventions`, release a tag, then run `task copier:update` (copie
 | Class | Files |
 |---|---|
 | template-owned | `taskfiles/baseline.taskfile.yml`, `.pre-commit-config.yaml`, `cliff.toml`, `renovate.json`, `CLAUDE.md`, `.github/zizmor.yml`, `.github/workflows/{verify-basic,verify-deep,claude,deploy-site}.yml`, `bazel/baseline.bazelrc`, `.gitattributes` in `.claude/{skills,rules}`, `.opencode/{skills,rules}`, `.agents/skills` - each starts with an `ocx-baseline: template-owned file` banner |
-| seeded-once | `taskfile.yml`, `ocx.toml`, `grimoire.toml`, `AGENTS.md`, `.gitleaks.toml`, `.bazelrc`, `MODULE.bazel` - repo-owned after the first copy |
+| seeded-once | `taskfile.yml`, `ocx.toml`, `grimoire.toml`, `AGENTS.md`, `.gitleaks.toml`, `.github/renovate-local.json`, `.bazelrc`, `MODULE.bazel` - repo-owned after the first copy |
 | repo-owned | everything else; repo-owned skills and rules live in `agent-config/` as grim path sources, never hand-written into the client dirs (committed grim output, checked by `grim:check`) |
 
 ## Target state
@@ -38,7 +38,7 @@ Change `ocx-sh/conventions`, release a tag, then run `task copier:update` (copie
 | Distribution | copier only; `.copier-answers.yml` is the version marker; Renovate opens the update PRs |
 | Tasks | lowercase `taskfile.yml`; run as `ocx exec -- task <name>` |
 | Tools | ocx for every tool: exact pins, committed `ocx.lock`, groups by role (`lint`/`test`/`build`/`docs`/`release`); pnpm via ocx, no corepack |
-| Hooks | prek (pre-commit, commit-msg) running linters and gitleaks; Renovate, never Dependabot |
+| Hooks | prek (pre-commit, commit-msg) running linters and gitleaks; Renovate, never Dependabot; ecosystem norms live in the conventions presets, repo-specific rules go in `.github/renovate-local.json` |
 | CI | `verify-basic` on PR/main, `verify-deep` nightly and as gate of `release:prepare`; every action pinned by SHA |
 | Build | Bazel (full profile) uses `rules_ocx` for ocx-provided tools, `bazel-cache.ocx.sh`, telemetry to `otel.ocx.sh` |
 | AI config | grim with claude, codex, opencode; AGENTS.md canonical, CLAUDE.md a pointer |
