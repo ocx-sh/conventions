@@ -1,2 +1,2 @@
 {%- set tag = ((_copier_conf.vcs_ref or '') | string) | regex_search('^v\\d[\\w.]*(?:-[\\w.]+)?$') -%}
-{"$schema": "https://docs.renovatebot.com/renovate-schema.json", "extends": ["github>ocx-sh/conventions//renovate/{% if profile == 'mirror' %}mirror{% else %}default{% endif %}#{{ tag or _copier_conf.vcs_ref_hash }}"]}
+{"$schema": "https://docs.renovatebot.com/renovate-schema.json", "extends": ["github>ocx-sh/conventions//renovate/{% if profile == 'mirror' %}mirror{% else %}default{% endif %}#{{ tag or _copier_conf.vcs_ref_hash }}", "local>{{ repo_owner }}/{{ repo_name }}//.github/renovate-local"]}

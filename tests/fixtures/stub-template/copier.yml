@@ -6,6 +6,9 @@ _skip_if_exists:
 
 repo_name:
   type: str
+repo_owner:
+  type: str
+  default: ocx-sh
 profile:
   type: str
   choices: [full, mirror]

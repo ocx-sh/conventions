@@ -123,6 +123,11 @@ class = "seeded-once"
 profiles = ["full", "mirror"]
 
 [[file]]
+path = ".github/renovate-local.json"
+class = "seeded-once"
+profiles = ["full", "mirror"]
+
+[[file]]
 path = ".bazelrc"
 class = "seeded-once"
 profiles = ["full"]

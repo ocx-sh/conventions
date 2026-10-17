@@ -14,10 +14,16 @@ _skip_if_exists:
   - .gitleaks.toml
   - .bazelrc
   - MODULE.bazel
+  - .github/renovate-local.json
 
 repo_name:
   type: str
   help: Repository name (without owner), e.g. ocx-website
+
+repo_owner:
+  type: str
+  help: GitHub owner or org of the repository, e.g. ocx-sh
+  default: ocx-sh
 
 profile:
   type: str

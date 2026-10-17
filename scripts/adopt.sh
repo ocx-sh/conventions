@@ -24,7 +24,8 @@ trap 'rm -rf "$tmp"' EXIT
 python3 - "$fleet" "$key" >"$tmp/data.json" <<'PY' || die "fleet key '$key' not found (or unreadable) in $fleet"
 import json, sys, tomllib
 with open(sys.argv[1], "rb") as f:
-    print(json.dumps(tomllib.load(f)["repos"][sys.argv[2]]["answers"]))
+    r = tomllib.load(f)["repos"][sys.argv[2]]
+    print(json.dumps({"repo_owner": r["repo"].split("/")[0], **r["answers"]}))
 PY
 
 cd "$dest"
