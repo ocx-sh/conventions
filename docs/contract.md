@@ -33,7 +33,8 @@ The template uses no `_tasks`, `_migrations` or `_jinja_extensions`: `--trust` i
 
 The repo-owned root `taskfile.yml` must define `verify`, `ci:lint`, `ci:test`, `ci:build`,
 `ci:docs`, `ci:deep`; a missing one fails `baseline:check` naming it. `ci:test` and `ci:deep`
-write JUnit XML under `target/reports/junit/`. Repo-owned optional hooks: `hooks:pre-commit`
+write JUnit XML under `target/reports/junit/`. The `docs` job uploads whatever `ci:docs` leaves under
+`target/reports/` as the artifact `docs-reports`, also on failure; follow-up workflows read it by that name. Repo-owned optional hooks: `hooks:pre-commit`
 (called by the prek config when defined), `release:bump-files` (called by `release:prepare`).
 
 ### `release:prepare`
