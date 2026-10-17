@@ -105,6 +105,15 @@ jobs:
         with:
           groups: default,docs
       - run: task ci:docs
+      - name: Upload docs reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-reports
+          path: target/reports/
+          if-no-files-found: ignore
+          retention-days: 14
+          overwrite: true # a job rerun uploads the same name again; without it the step 409s and fails the job
 {%- endif %}
 
   # The single required check: every job succeeded (or was skipped).
