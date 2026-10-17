@@ -1,7 +1,7 @@
 schema = 1
 
 [repos.demo]
-repo = "ocx-sh/demo"
+repo = "grimoire-rs/demo"
 path = "demo"
 iteration = 2
 adopted = false

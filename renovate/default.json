@@ -6,6 +6,7 @@
   "extends": [
     "config:recommended",
     "helpers:pinGitHubActionDigests",
+    "docker:pinDigests",
     ":semanticCommits"
   ],
   "timezone": "UTC",
@@ -62,6 +63,70 @@
       ],
       "semanticCommitType": "ci",
       "semanticCommitScope": "deps"
+    },
+    {
+      "description": [
+        "Group non-major workflow action bumps; the disable rules below win for template-owned refs and files"
+      ],
+      "matchCategories": [
+        "ci"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin",
+        "pinDigest"
+      ],
+      "groupName": "github actions (non-major)"
+    },
+    {
+      "description": [
+        "Group non-major npm bumps; majors stay separate PRs"
+      ],
+      "matchCategories": [
+        "js"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin",
+        "pinDigest"
+      ],
+      "groupName": "npm (non-major)"
+    },
+    {
+      "description": [
+        "Group non-major cargo bumps; majors stay separate PRs"
+      ],
+      "matchCategories": [
+        "rust"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin",
+        "pinDigest"
+      ],
+      "groupName": "cargo (non-major)"
+    },
+    {
+      "description": [
+        "Group non-major python bumps; majors stay separate PRs"
+      ],
+      "matchCategories": [
+        "python"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin",
+        "pinDigest"
+      ],
+      "groupName": "python (non-major)"
     },
     {
       "description": [
@@ -142,5 +207,8 @@
         "@ocx-sh/theme"
       ]
     }
-  ]
+  ],
+  "lockFileMaintenance": {
+    "enabled": true
+  }
 }

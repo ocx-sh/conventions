@@ -143,7 +143,10 @@ that the module is rules_ocx) and rejects any `http_archive`/`http_file` for a t
 ## Renovate presets
 
 Rendered `renovate.json` extends `github>ocx-sh/conventions//renovate/default#<tag>` (`mirror` profile:
-`…//renovate/mirror#<tag>`).
+`…//renovate/mirror#<tag>`), then `local>{repo_owner}/{repo_name}//.github/renovate-local`, so repo-local rules
+win. `repo_owner` is a copier answer (default `ocx-sh`); `scripts/adopt.sh` derives it from the fleet entry's `repo`.
+`.github/renovate-local.json` is seeded once (both profiles) with only a description; the adopting repo owns it afterwards.
+Ecosystem norms live in the presets, never in adopters: put only repo-specific rules in the local file.
 
 - `default`: `config:recommended`, weekly schedule, semantic commits (`ci(deps)` / `chore(deps)`),
   `helpers:pinGitHubActionDigests`, `minimumReleaseAge: "7 days"`, `ocx-sh/conventions` action refs ignored (they move with copier),
@@ -151,8 +154,12 @@ Rendered `renovate.json` extends `github>ocx-sh/conventions//renovate/default#<t
   `regex:^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)$`, `postUpgradeTasks: ["ocx lock"]`),
   `bazel-module` manager for `rules_ocx` (`postUpgradeTasks: ["bazel mod deps"]`), pypi regex manager
   for `COPIER_VERSION` / `ZIZMOR_VERSION` (matches only `template/taskfiles/baseline.taskfile.yml` in conventions itself; adopted repos get new pins through `copier update`), and the `ocx-sh/website` deploy action grouped with `@ocx-sh/theme`.
-- `mirror`: `default` minus the npm and Bazel groups.
+- Ecosystem norms (`packageRules` on `matchCategories` with `matchUpdateTypes` minor, patch, digest, pin, pinDigest; majors stay
+  separate PRs): `ci` grouped as "github actions (non-major)", `js` as "npm (non-major)" with `lockFileMaintenance`,
+  `rust` as "cargo (non-major)", `python` as "python (non-major)", and `docker:pinDigests`. The group rules precede the
+  `enabled: false` rules for `ocx-sh/conventions` refs and template-owned workflows, and the `ocx site theme` group follows the npm group.
+- `mirror`: `default` minus the npm and Bazel groups, and only the `ci` group.
 
 Renovate runs self-hosted from `ocx-sh/conventions` (`renovate.yml`, schedule + dispatch, GitHub App
-token, `RENOVATE_REPOSITORIES` = adopted repos in `fleet.toml`; the job runs in environment `renovate`, which holds `RENOVATE_APP_ID` / `RENOVATE_APP_KEY`); remove an adopted repo from the hosted
+token incl. `vulnerability-alerts: read` (the App needs the "Dependabot alerts: read" permission), `RENOVATE_REPOSITORIES` = adopted repos in `fleet.toml`; the job runs in environment `renovate`, which holds `RENOVATE_APP_ID` / `RENOVATE_APP_KEY`); remove an adopted repo from the hosted
 Renovate app so PRs do not double.

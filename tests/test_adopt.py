@@ -76,6 +76,7 @@ def test_src_path_rewritten(adopt, dest):
     answers = (dest / ".copier-answers.yml").read_text()
     assert "_src_path: https://github.com/ocx-sh/conventions.git" in answers, f"C-024 _src_path must be rewritten: {answers}"
     assert "_commit: v0.1.0" in answers and "repo_name: demo" in answers, f"C-024 answers keep _commit and fleet answers: {answers}"
+    assert "repo_owner: grimoire-rs" in answers, f"C-024 repo_owner derives from the fleet entry's repo field: {answers}"
 
 
 def test_full_claude_md_becomes_agents_md(adopt, dest):

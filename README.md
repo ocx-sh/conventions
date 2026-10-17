@@ -49,7 +49,7 @@ or root-task contract is broken.
 [`MANIFEST.toml`](MANIFEST.toml) classifies every rendered path:
 
 - template-owned: rewritten on each update, line 1 is the `ocx-baseline: template-owned file` banner (JSON: a `description` key). Change `src/` here, never the copy.
-- seeded-once: written on first copy (`taskfile.yml`, `ocx.toml`, `grimoire.toml`, `AGENTS.md`, `.gitleaks.toml`); the adopting repo owns it afterwards.
+- seeded-once: written on first copy (`taskfile.yml`, `ocx.toml`, `grimoire.toml`, `AGENTS.md`, `.gitleaks.toml`, `.github/renovate-local.json`); the adopting repo owns it afterwards.
 
 The task, workflow and preset interface adopters rely on is in [`docs/contract.md`](docs/contract.md).
 
@@ -69,7 +69,7 @@ The task, workflow and preset interface adopters rely on is in [`docs/contract.m
 
 ## Owner acts
 
-- Renovate: create the Renovate GitHub App, install it on the fleet repos, create an environment `renovate` here (deployment branches: `main` only) and set `RENOVATE_APP_ID` and `RENOVATE_APP_KEY` as its secrets, not as repo secrets.
+- Renovate: create the Renovate GitHub App (including the "Dependabot alerts: read" permission, so Renovate can replace Dependabot security PRs), install it on the fleet repos, create an environment `renovate` here (deployment branches: `main` only) and set `RENOVATE_APP_ID` and `RENOVATE_APP_KEY` as its secrets, not as repo secrets.
 - Org secrets: set `BAZEL_CACHE_READ_AUTH`, `BAZEL_CACHE_WRITE_AUTH`, `OTEL_OTLP_AUTH` and `CLAUDE_CODE_OAUTH_TOKEN` at org level (no `ci` / `ci-write` environments); the template passes the write credential only on a push to `main`.
 - Pages: enable GitHub Pages (source: GitHub Actions) so `status.yml` can publish the drift status page.
 - Tag `v0.1.0` and push: adopters pin template and setup action by commit, and `release:prepare` never tags or pushes.
