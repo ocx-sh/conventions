@@ -1,1 +1,1 @@
-{"extends": ["github>ocx-sh/conventions//renovate/default#v0.1.0"]}
+{"extends": ["github>ocx-sh/conventions//renovate/default#v0.1.0", "local>ocx-sh/conventions//.github/renovate-local"]}

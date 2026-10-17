@@ -86,7 +86,7 @@ def test_renovate_config_validator(tmp_path, source):
 
 def test_fixture_extends_line():
     cfg = load(FIXTURES / "renovate" / "renovate.json")
-    assert cfg == {"extends": ["github>ocx-sh/conventions//renovate/default#v0.1.0"]}, "C-015 rendered renovate.json shape"
+    assert cfg == {"extends": ["github>ocx-sh/conventions//renovate/default#v0.1.0", "local>ocx-sh/conventions//.github/renovate-local"]}, "C-015 rendered renovate.json shape"
 
 
 def test_rendered_renovate_json_extends_preset(render):
@@ -94,9 +94,65 @@ def test_rendered_renovate_json_extends_preset(render):
     p = repo / "renovate.json"
     assert p.exists(), "C-015 template-owned renovate.json must render"
     ext = json.loads(p.read_text())["extends"]
-    assert len(ext) == 1 and re.fullmatch(r"github>ocx-sh/conventions//renovate/default#\S+", ext[0]), f"C-015 rendered extends: {ext}"
+    assert len(ext) == 2 and re.fullmatch(r"github>ocx-sh/conventions//renovate/default#\S+", ext[0]), f"C-015 rendered extends: {ext}"
+    assert ext[1] == "local>ocx-sh/conventions//.github/renovate-local", f"C-015 repo-local preset must extend last so it wins: {ext}"
     mirror = json.loads((render("mirror") / "renovate.json").read_text())["extends"]
     assert re.fullmatch(r"github>ocx-sh/conventions//renovate/mirror#\S+", mirror[0]), f"C-015 mirror profile extends mirror preset: {mirror}"
+    assert mirror[1] == "local>ocx-sh/mirror-age//.github/renovate-local", f"C-015 mirror local preset: {mirror}"
+
+
+def test_repo_owner_answer_feeds_local_preset(render):
+    repo = render("full-minimal", extra_data={"repo_owner": "grimoire-rs"})
+    assert json.loads((repo / "renovate.json").read_text())["extends"][1] == "local>grimoire-rs/conventions//.github/renovate-local"
+
+
+def test_renovate_local_seeded_once(render, git_env):
+    repo = render("full-minimal")
+    local = repo / ".github" / "renovate-local.json"
+    seeded = json.loads(local.read_text())
+    assert "extends" not in seeded and "packageRules" not in seeded and seeded["description"], "C-015 seed is an empty repo-local config"
+    assert (render("mirror") / ".github" / "renovate-local.json").exists(), "C-015 mirror profile seeds renovate-local.json too"
+    local.write_text('{"packageRules": []}\n')
+    cmd = ["uv", "run", "--project", REPO_ROOT, "copier", "copy", "--defaults", "--quiet", "--overwrite", "--vcs-ref", "HEAD",
+           "--data-file", FIXTURES / "answers" / "full-minimal.yml", REPO_ROOT, repo]
+    subprocess.run([str(c) for c in cmd], cwd=REPO_ROOT, env=git_env, check=True, capture_output=True, text=True)
+    assert local.read_text() == '{"packageRules": []}\n', "C-015 renovate-local.json is repo-owned after the first copy"
+
+
+def group_rule(cfg, category):
+    rules = [r for r in cfg["packageRules"] if r.get("matchCategories") == [category]]
+    assert len(rules) == 1, f"C-015 exactly one {category} group rule"
+    return rules[0]
+
+
+@pytest.mark.parametrize("path,cats", [(DEFAULT, {"ci": "github actions (non-major)", "js": "npm (non-major)",
+                                                    "rust": "cargo (non-major)", "python": "python (non-major)"}),
+                                       (MIRROR, {"ci": "github actions (non-major)"})], ids=["default", "mirror"])
+def test_ecosystem_groups_are_non_major(path, cats):
+    cfg = load(path)
+    for cat, name in cats.items():
+        r = group_rule(cfg, cat)
+        assert r["groupName"] == name and "major" not in r["matchUpdateTypes"], f"C-015 {cat} group {name!r} must leave majors separate"
+        assert set(r["matchUpdateTypes"]) == {"minor", "patch", "digest", "pin", "pinDigest"}
+
+
+@pytest.mark.parametrize("path", [DEFAULT, MIRROR], ids=lambda p: p.stem)
+def test_groups_precede_disable_rules_and_theme_group(path):
+    """Later packageRules win: the ci group must not re-enable the template-owned disables, nor shadow the theme group."""
+    rules = load(path)["packageRules"]
+    idx = {i: r for i, r in enumerate(rules)}
+    ci = next(i for i, r in idx.items() if r.get("matchCategories") == ["ci"])
+    disables = [i for i, r in idx.items() if r.get("enabled") is False]
+    assert disables and ci < min(disables), "C-015 ci group before the enabled:false rules"
+    if path == DEFAULT:
+        theme = next(i for i, r in idx.items() if r.get("groupName") == "ocx site theme")
+        assert theme > next(i for i, r in idx.items() if r.get("matchCategories") == ["js"]), "C-015 theme group after the npm group"
+
+
+def test_default_docker_pins_and_npm_lockfile_maintenance():
+    cfg = load(DEFAULT)
+    assert "docker:pinDigests" in cfg["extends"], "C-015 default pins docker digests"
+    assert cfg["lockFileMaintenance"] == {"enabled": True}, "C-015 npm lockfile maintenance on"
 
 
 def test_default_basics():

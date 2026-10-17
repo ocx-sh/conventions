@@ -62,6 +62,22 @@
     },
     {
       "description": [
+        "Group non-major workflow action bumps; the disable rules below win for template-owned refs and files"
+      ],
+      "matchCategories": [
+        "ci"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin",
+        "pinDigest"
+      ],
+      "groupName": "github actions (non-major)"
+    },
+    {
+      "description": [
         "D-02: template workflows pin ocx-sh/conventions via copier (vcs_ref_hash), never Renovate"
       ],
       "matchManagers": [

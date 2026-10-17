@@ -55,7 +55,7 @@ theme_bundle = true
 repo = "ocx-sh/website"
 path = "ocx-website"
 iteration = 1
-adopted = false
+adopted = true
 excluded = false
 
 [repos.ocx-website.answers]
