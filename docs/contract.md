@@ -161,5 +161,5 @@ Ecosystem norms live in the presets, never in adopters: put only repo-specific r
 - `mirror`: `default` minus the npm and Bazel groups, and only the `ci` group.
 
 Renovate runs self-hosted from `ocx-sh/conventions` (`renovate.yml`, schedule + dispatch, GitHub App
-token, `RENOVATE_REPOSITORIES` = adopted repos in `fleet.toml`; the job runs in environment `renovate`, which holds `RENOVATE_APP_ID` / `RENOVATE_APP_KEY`); remove an adopted repo from the hosted
+token incl. `vulnerability-alerts: read` (the App needs the "Dependabot alerts: read" permission), `RENOVATE_REPOSITORIES` = adopted repos in `fleet.toml`; the job runs in environment `renovate`, which holds `RENOVATE_APP_ID` / `RENOVATE_APP_KEY`); remove an adopted repo from the hosted
 Renovate app so PRs do not double.

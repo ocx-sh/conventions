@@ -343,7 +343,8 @@ def test_runner_token_scoped_per_owner_with_explicit_permissions():
         f"C-016 token must be scoped to the matrix owner and its repositories: {tok}"
     perms = {k: v for k, v in tok.items() if k.startswith("permission-")}
     assert perms == {"permission-contents": "write", "permission-pull-requests": "write", "permission-workflows": "write",
-                     "permission-issues": "write", "permission-metadata": "read"}, f"C-016 explicit token permissions: {perms}"
+                     "permission-issues": "write", "permission-metadata": "read",
+                     "permission-vulnerability-alerts": "read"}, f"C-016 explicit token permissions: {perms}"
 
 
 def test_runner_installs_copier_and_allows_only_postupgrade_commands():

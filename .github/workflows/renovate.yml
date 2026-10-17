@@ -118,6 +118,7 @@ jobs:
           permission-workflows: write
           permission-issues: write
           permission-metadata: read
+          permission-vulnerability-alerts: read
 
       - name: Run Renovate
         if: steps.gate.outputs.enabled == 'true'
