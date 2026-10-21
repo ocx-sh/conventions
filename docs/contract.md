@@ -16,6 +16,7 @@ template-owned file: change `ocx-sh/conventions` and run `task copier:update`.
 | `deep_os` | subset of `ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, macos-26, windows-latest, windows-11-arm`; default `[ubuntu-latest]` | full only |
 | `theme_bundle` | bool, default `site is not none` | full only |
 | `bazel_cache_write` | `main` (default) \| `trusted` | full with `bazel`; `trusted` makes every job that runs a `ci:*` task (lint, test, build, docs, deep) present the write secret on every event that carries it |
+| `zizmor_ignore` | list of `.github/workflows/<name>.yml`, default `[]` | full only; workflows another tool generates (cargo-dist's `release.yml`): zizmor reports nothing for them. Hand-written workflows are fixed, not listed |
 | `repo_workflows` | `false` (default) or `{secrets: [NAME, ...]}`; names are letters, digits, underscores, not starting with a digit or `GITHUB_` | full only; adds the `repo` job to `verify-basic` and `verify-deep` and seeds `basic-repo.yml` and `deep-repo.yml` |
 
 The template uses no `_tasks`, `_migrations` or `_jinja_extensions`: `--trust` is never needed.
@@ -118,6 +119,10 @@ write-capable Claude App token) and an explicit `--allowedTools` allowlist (`gh 
 **`deploy-site.yml`** (when `site.deploy`) — triggers `push: main` (site paths) and `workflow_dispatch`
 only, environment `ocx.sh`, uses the pinned `ocx-sh/website/.github/actions/deploy` with inputs
 `dist` and optional `path` from `site`, secret `BUNNY_STORAGE_KEY`. Never runs on `pull_request`.
+
+**`.github/zizmor.yml`** (template-owned) — hash-pin policy for every `uses:`; `self-repository` off. Each `zizmor_ignore`
+entry becomes an `ignore:` line (the workflow's file name) under every audit of the pinned `ZIZMOR_VERSION`, because zizmor
+has no path exclusion. A `ZIZMOR_VERSION` bump that adds an audit must add its id to `src/.github/zizmor.yml.jinja`.
 
 ## Setup action (`.github/actions/setup`, composite)
 

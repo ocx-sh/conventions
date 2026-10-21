@@ -3,12 +3,13 @@
 Every assertion message starts with the C-ID it pins. Defaults (no new answer set) must render exactly as before; the
 pinned-output tests for that live beside the fixtures in test_contract.py.
 """
+import re
 import subprocess
 
 import pytest
 import yaml
 
-from conftest import FIXTURES, render_to
+from conftest import FIXTURES, REPO_ROOT, render_to
 
 RUNNERS = ["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "macos-15-intel", "macos-26", "windows-latest", "windows-11-arm"]
 
@@ -159,3 +160,69 @@ def test_c029_unknown_mode_fails(tmp_path):
     with pytest.raises(subprocess.CalledProcessError) as e:
         render_to(answers_file(tmp_path, "full-bazel-site", bazel_cache_write="everyone"), tmp_path / "out")
     assert "bazel_cache_write" in (e.value.stdout or "") + (e.value.stderr or ""), "C-029 an unknown mode must fail naming bazel_cache_write"
+
+
+# ---------------------------------------------------------------- C-030 zizmor_ignore
+
+GENERATED = """name: Release
+on:
+  pull_request:
+permissions:
+  contents: write
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    container: ghcr.io/foo/bar:latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: some/action@main
+      - run: echo "${{ github.event.pull_request.title }}"
+  call:
+    uses: ./.github/workflows/other.yml
+    secrets: inherit
+"""
+
+
+def zizmor_version():
+    text = (REPO_ROOT / "src" / "taskfiles" / "baseline.taskfile.yml").read_text()
+    return re.search(r'ZIZMOR_VERSION:\s*"([^"]+)"', text).group(1)
+
+
+def zizmor(repo):
+    return subprocess.run(["uv", "tool", "run", "--from", f"zizmor=={zizmor_version()}", "zizmor", "--no-online-audits",
+                           "--config", ".github/zizmor.yml", ".github"], cwd=repo, capture_output=True, text=True, timeout=300)
+
+
+def with_workflow(repo, name):
+    (repo / ".github" / "workflows" / name).write_text(GENERATED)
+    return zizmor(repo)
+
+
+def test_c030_listed_generated_workflow_is_not_reported(tmp_path):
+    repo = render_to(answers_file(tmp_path, "full-minimal", zizmor_ignore=[".github/workflows/release.yml"]), tmp_path / "out")
+    r = with_workflow(repo, "release.yml")
+    assert r.returncode == 0, f"C-030 a workflow listed in zizmor_ignore must produce no finding: {r.stdout[-600:]}{r.stderr[-600:]}"
+
+
+def test_c030_unlisted_workflow_still_fails(tmp_path):
+    repo = render_to(answers_file(tmp_path, "full-minimal"), tmp_path / "out")
+    r = with_workflow(repo, "release.yml")
+    assert r.returncode != 0, "C-030 without the answer the same workflow must fail zizmor (the ignore is what turns it green)"
+
+
+def test_c030_only_the_listed_file_is_ignored(tmp_path):
+    repo = render_to(answers_file(tmp_path, "full-minimal", zizmor_ignore=[".github/workflows/release.yml"]), tmp_path / "out")
+    r = with_workflow(repo, "hand-written.yml")
+    assert r.returncode != 0, "C-030 a hand-written workflow must still be audited when another one is listed"
+
+
+def test_c030_default_renders_no_ignore(tmp_path):
+    repo = render_to(answers_file(tmp_path, "full-minimal"), tmp_path / "out")
+    assert "ignore" not in (repo / ".github" / "zizmor.yml").read_text(), "C-030 the default policy file carries no ignore list"
+
+
+@pytest.mark.parametrize("bad", ["release.yml", [".github/workflows/../x.yml"], ["release.yml"], [".github/workflows/a.txt"], [3], {"a": 1}])
+def test_c030_malformed_zizmor_ignore_fails(tmp_path, bad):
+    with pytest.raises(subprocess.CalledProcessError) as e:
+        render_to(answers_file(tmp_path, "full-minimal", zizmor_ignore=bad), tmp_path / "out")
+    assert "zizmor_ignore" in (e.value.stdout or "") + (e.value.stderr or ""), f"C-030 {bad!r} must fail naming zizmor_ignore"

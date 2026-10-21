@@ -160,6 +160,22 @@ repo_workflows:
     {%- endif -%}
     {%- endif -%}
 
+zizmor_ignore:
+  type: yaml
+  help: >-
+    List of workflow paths that another tool generates (e.g. .github/workflows/release.yml from cargo-dist) and zizmor must
+    not report on. Hand-written workflows are fixed, not listed.
+  default: []
+  when: "{{ profile == 'full' }}"
+  validator: >-
+    {%- if zizmor_ignore is string or zizmor_ignore is mapping or zizmor_ignore is not iterable -%}
+    zizmor_ignore must be a list of workflow paths.
+    {%- else -%}
+    {%- for p in zizmor_ignore if p is not string or not (p | regex_search('^\.github/workflows/[A-Za-z0-9._-]+\.ya?ml$')) -%}
+    Invalid zizmor_ignore entry '{{ p }}': expected .github/workflows/<name>.yml.{{ ' ' }}
+    {%- endfor -%}
+    {%- endif -%}
+
 theme_bundle:
   type: bool
   help: Install the ocx-theme grim bundle (default on when the repo has a site)
