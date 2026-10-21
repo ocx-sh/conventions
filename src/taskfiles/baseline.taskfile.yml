@@ -38,6 +38,10 @@ tasks:
     desc: "Fail unless the commit subject is a conventional commit (arg: the message file, as prek passes it)"
     silent: true
     cmds:
+      # A repo-owned `hooks:repo-commit-msg` task judges the message instead, for a repo whose subjects this check
+      # refuses (a `Checkpoint` commit, a `release:` subject) or that gates the commit on more than its subject.
+      - cmd: '{{.TASK_EXE}} -x hooks:repo-commit-msg -- {{.CLI_ARGS}}'
+        if: '{{.TASK_EXE}} --list-all --silent | grep -qx hooks:repo-commit-msg'
       - cmd: |
           # Task already shell-quotes CLI_ARGS (a path with spaces arrives as 'a b/MSG'): do not wrap it in quotes again.
           read -r msg < {{.CLI_ARGS}} || true
@@ -46,6 +50,7 @@ tasks:
           if [[ $msg =~ $re ]]; then exit 0; fi
           echo "commit subject must be '<type>[(scope)][!]: <subject>' with type one of: feat fix docs style refactor perf test build ci chore revert" >&2
           exit 1
+        if: '! ({{.TASK_EXE}} --list-all --silent | grep -qx hooks:repo-commit-msg)'
 
   hooks:repo-pre-commit:
     desc: Run the repo-owned hooks:pre-commit task when the repo defines it

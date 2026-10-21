@@ -1,15 +1,16 @@
-"""C-027..C-031 template extension: runner set, repo workflows, trusted Bazel cache, zizmor ignore, release hooks.
+"""C-027..C-031 template extension: runner set, repo workflows, trusted Bazel cache, zizmor ignore, repo-owned task hooks.
 
 Every assertion message starts with the C-ID it pins. Defaults (no new answer set) must render exactly as before; the
 pinned-output tests for that live beside the fixtures in test_contract.py.
 """
 import re
+import shlex
 import subprocess
 
 import pytest
 import yaml
 
-from conftest import FIXTURES, REPO_ROOT, render_to
+from conftest import FIXTURES, REPO_ROOT, git_env_dict, ocx_lock_committed, render_to, run
 
 RUNNERS = ["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "macos-15-intel", "macos-26", "windows-latest", "windows-11-arm"]
 
@@ -226,3 +227,53 @@ def test_c030_malformed_zizmor_ignore_fails(tmp_path, bad):
     with pytest.raises(subprocess.CalledProcessError) as e:
         render_to(answers_file(tmp_path, "full-minimal", zizmor_ignore=bad), tmp_path / "out")
     assert "zizmor_ignore" in (e.value.stdout or "") + (e.value.stderr or ""), f"C-030 {bad!r} must fail naming zizmor_ignore"
+
+
+# ---------------------------------------------------------------- C-031 hooks:repo-commit-msg
+
+def commit_msg_hook(repo):
+    cfg = yaml.safe_load((repo / ".pre-commit-config.yaml").read_text())
+    hooks = [h for r in cfg["repos"] for h in r["hooks"] if "commit-msg" in h.get("stages", [])]
+    assert len(hooks) == 1, f"C-031 exactly one commit-msg hook expected: {hooks}"
+    return shlex.split(hooks[0]["entry"])
+
+
+def judge(repo, tmp_path, subject):
+    msg = tmp_path / "COMMIT_EDITMSG"
+    msg.write_text(subject + "\n")
+    return run([*commit_msg_hook(repo), msg], repo, git_env_dict(), check=False, timeout=300)
+
+
+def repo_with_hook(tmp_path, body):
+    repo = render_to("full-minimal", tmp_path / "out")
+    doc = yaml.safe_load((repo / "taskfile.yml").read_text())
+    doc["tasks"]["hooks:repo-commit-msg"] = {"cmds": body}
+    (repo / "taskfile.yml").write_text(yaml.safe_dump(doc, sort_keys=False))
+    ocx_lock_committed(repo)
+    return repo
+
+
+def test_c031_repo_commit_msg_hook_replaces_the_conventional_check(tmp_path):
+    repo = repo_with_hook(tmp_path, ['read -r msg < {{.CLI_ARGS}}; [ "$msg" = Checkpoint ]'])
+    ok = judge(repo, tmp_path, "Checkpoint")
+    assert ok.returncode == 0, f"C-031 a subject the repo hook accepts must pass although it is not conventional: {ok.stdout[-300:]}{ok.stderr[-300:]}"
+    bad = judge(repo, tmp_path, "feat: a conventional subject the repo hook refuses")
+    assert bad.returncode != 0, "C-031 the repo hook decides alone: a conventional subject it refuses must fail (replace, not add)"
+
+
+def test_c031_repo_commit_msg_hook_receives_a_message_path_with_spaces(tmp_path):
+    repo = repo_with_hook(tmp_path, ['read -r msg < {{.CLI_ARGS}} && echo "$msg" > seen.txt'])
+    spaced = tmp_path / "with space"
+    spaced.mkdir()
+    msg = spaced / "COMMIT_EDITMSG"
+    msg.write_text("anything\n")
+    r = run([*commit_msg_hook(repo), msg], repo, git_env_dict(), check=False, timeout=300)
+    assert r.returncode == 0 and (repo / "seen.txt").read_text().strip() == "anything", \
+        f"C-031 the repo hook must be handed the message file, path with spaces included: {r.stdout[-300:]}{r.stderr[-300:]}"
+
+
+def test_c031_without_the_hook_the_conventional_check_stands(tmp_path):
+    repo = render_to("full-minimal", tmp_path / "out")
+    ocx_lock_committed(repo)
+    assert judge(repo, tmp_path, "Checkpoint").returncode == 1, "C-031 no repo hook: a non-conventional subject still fails"
+    assert judge(repo, tmp_path, "fix(x): y").returncode == 0, "C-031 no repo hook: a conventional subject still passes"

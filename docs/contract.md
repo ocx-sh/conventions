@@ -38,8 +38,8 @@ The repo-owned root `taskfile.yml` must define `verify`, `ci:lint`, `ci:test`, `
 `ci:docs`, `ci:deep`; a missing one fails `baseline:check` naming it. `ci:test` and `ci:deep`
 write JUnit XML under `target/reports/junit/`. The `docs` job uploads whatever `ci:docs` leaves under
 `target/reports/` as the artifact `docs-reports`, also on failure; follow-up workflows read it by that name. Repo-owned optional hooks: `hooks:pre-commit`
-(called by the prek config when defined), `release:bump-files`, `release:gate`, `release:validate`, `release:verify`
-(called by `release:prepare`, below).
+(called by the prek config when defined), `hooks:repo-commit-msg` (replaces the conventional-subject check),
+`release:bump-files`, `release:gate`, `release:validate`, `release:verify` (called by `release:prepare`, below).
 
 ### `release:prepare`
 
@@ -75,7 +75,9 @@ Optional repo-owned hooks, each detected by name in `task --list-all`:
 `default_install_hook_types: [pre-commit, commit-msg]`. Local hooks: `gitleaks git --staged --redact`
 (pre-commit); conventional-commit subject check (commit-msg; types `feat fix docs style refactor perf
 test build ci chore revert`, optional scope, optional `!`; anything else exits 1 naming the types);
-`task hooks:pre-commit` when the repo defines it. `.gitleaks.toml` extends the defaults
+`task hooks:pre-commit` when the repo defines it. A repo-owned `hooks:repo-commit-msg` task, when defined, judges the
+commit message instead of the conventional check (it receives the message file as `{{.CLI_ARGS}}`); it is for a repo
+whose subjects that check refuses or that gates a commit on more than its subject. `.gitleaks.toml` extends the defaults
 (`useDefault = true`); add path/regex allowlists there.
 
 ## Workflows (template-owned)
