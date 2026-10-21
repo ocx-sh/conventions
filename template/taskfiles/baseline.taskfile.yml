@@ -146,6 +146,10 @@ tasks:
             exit 2
           fi
       # Gate: the latest completed scheduled/dispatched verify-deep run on the default branch must be green.
+      # A repo-owned `release:gate` task replaces this check (readiness that spans the repo's own workflows).
+      # The negated form is `! ( ... )`: Task's `if:` skips the command when it starts with a bare `!`.
+      - cmd: '{{.TASK_EXE}} release:gate'
+        if: '{{.TASK_EXE}} --list-all --silent | grep -qx release:gate'
       - cmd: |
           if ! gh auth status >/dev/null 2>&1; then
             echo "release:prepare: gh is not authenticated — run gh auth login (the verify-deep gate reads run history)" >&2
@@ -171,6 +175,7 @@ tasks:
             *)
               echo "release:prepare: the latest verify-deep run on $branch is not green: $latest" >&2; exit 1 ;;
           esac
+        if: '! ({{.TASK_EXE}} --list-all --silent | grep -qx release:gate)'
       - task: release:run
         vars: { BUMP: auto }
         if: '[ -n "{{.VERSION}}" ]'
@@ -207,7 +212,16 @@ tasks:
             {{.TASK_EXE}} release:bump-files VERSION="{{.NEXT_VERSION | trimPrefix "v"}}"
           fi
       - ocx exec -g release -- git-cliff --tag "{{.NEXT_VERSION}}" -o CHANGELOG.md
+      # Optional repo-owned hook: validate what the release rewrote (version files, CHANGELOG.md).
+      - cmd: |
+          if {{.TASK_EXE}} --list-all --silent | grep -qx 'release:validate'; then
+            {{.TASK_EXE}} release:validate VERSION="{{.NEXT_VERSION | trimPrefix "v"}}"
+          fi
+      # A repo-owned `release:verify` task replaces `verify` (the gate the release needs, not the one a PR needs).
+      - cmd: '{{.TASK_EXE}} release:verify'
+        if: '{{.TASK_EXE}} --list-all --silent | grep -qx release:verify'
       - task: verify
+        if: '! ({{.TASK_EXE}} --list-all --silent | grep -qx release:verify)'
       - |
         echo ""
         echo "Release {{.NEXT_VERSION}} prepared. Review the changes, then commit, tag and push yourself."

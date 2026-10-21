@@ -38,7 +38,8 @@ The repo-owned root `taskfile.yml` must define `verify`, `ci:lint`, `ci:test`, `
 `ci:docs`, `ci:deep`; a missing one fails `baseline:check` naming it. `ci:test` and `ci:deep`
 write JUnit XML under `target/reports/junit/`. The `docs` job uploads whatever `ci:docs` leaves under
 `target/reports/` as the artifact `docs-reports`, also on failure; follow-up workflows read it by that name. Repo-owned optional hooks: `hooks:pre-commit`
-(called by the prek config when defined), `release:bump-files` (called by `release:prepare`).
+(called by the prek config when defined), `release:bump-files`, `release:gate`, `release:validate`, `release:verify`
+(called by `release:prepare`, below).
 
 ### `release:prepare`
 
@@ -50,6 +51,15 @@ offers the menu; without one, a missing var exits non-zero with the usage line.
 - Refuses with `no verify-deep run on <branch> yet — dispatch one` when none exists.
 - Refuses when `gh` is unauthenticated.
 - Otherwise writes `CHANGELOG.md` via git-cliff `--tag v<next>` and runs `verify`. Never tags, never pushes.
+
+Optional repo-owned hooks, each detected by name in `task --list-all`:
+
+| Hook | Effect |
+|---|---|
+| `release:gate` | Replaces the verify-deep and `gh` checks above. A non-zero exit refuses the release before anything is written. |
+| `release:bump-files` | Called with `VERSION=x.y.z` before git-cliff (version files). |
+| `release:validate` | Called with `VERSION=x.y.z` after git-cliff wrote `CHANGELOG.md`; non-zero stops before `verify`. |
+| `release:verify` | Replaces `verify` as the last step. |
 
 ## `ocx.toml` and `grimoire.toml`
 
