@@ -15,6 +15,7 @@ template-owned file: change `ocx-sh/conventions` and run `task copier:update`.
 | `site` | null or `{dir, dist, deploy: bool, path?}` | full only; `path` optional, may be empty |
 | `deep_os` | subset of `ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, macos-26, windows-latest, windows-11-arm`; default `[ubuntu-latest]` | full only |
 | `theme_bundle` | bool, default `site is not none` | full only |
+| `repo_workflows` | `false` (default) or `{secrets: [NAME, ...]}`; names are letters, digits, underscores, not starting with a digit or `GITHUB_` | full only; adds the `repo` job to `verify-basic` and `verify-deep` and seeds `basic-repo.yml` and `deep-repo.yml` |
 
 The template uses no `_tasks`, `_migrations` or `_jinja_extensions`: `--trust` is never needed.
 
@@ -79,6 +80,7 @@ All: top-level `permissions: {}`, every `uses:` a 40-hex SHA with `# vX`, checko
 | `test` | setup (`default,test`) → `task ci:test`; JUnit to job summary + check annotations (fork-safe `annotate_only`) | full |
 | `build` | setup (`default,build`) → `task ci:build`; org secrets, write credential only on a push to `main`, else the read credential | `bazel` |
 | `docs` | setup (`default,docs`) → `task ci:docs` | `site` |
+| `repo` | `uses: ./.github/workflows/basic-repo.yml` with `permissions: contents: read` and each `repo_workflows.secrets` name mapped explicitly (never `secrets: inherit`) | `repo_workflows` |
 | `basic-gate` | `if: always()`; fails unless every needed job succeeded or was skipped by answer. The single required check. | always |
 
 The mirror profile renders `lint` and `basic-gate` only.
@@ -93,7 +95,14 @@ and runs without the secrets stay green. (The `renovate` and `ocx.sh` environmen
 `workflow_dispatch`, `workflow_call`, and `pull_request: types: [labeled]` gated on label `run-deep`.
 Matrix over `deep_os`, runs `task ci:deep` (Bazel repos: `--config=ci` plus `test:deep`). A failed
 scheduled run opens or updates one issue labelled `nightly-red` (`issues: write` on that job only);
-the next green scheduled run closes it.
+the next green scheduled run closes it. With `repo_workflows` a `repo` job (same `run-deep` gate as `deep`) calls
+`./.github/workflows/deep-repo.yml` with the same secret mapping, and `nightly-red` waits for it: a red `repo`
+job reddens the night, a cancelled one leaves the issue as it is.
+
+**`basic-repo.yml`, `deep-repo.yml`** (seeded once, only with `repo_workflows`) — `workflow_call` stubs the repo owns
+from the first render: top-level `permissions: {}`, one trivial job, and every listed secret declared under
+`on.workflow_call.secrets` (`required: false`, so a fork PR that receives no secrets still calls them). A called workflow
+sees only the secrets it declares: when the answer gains a secret, add it to both files by hand.
 
 **`claude.yml`** (full) — PR review on `pull_request` (opened, synchronize, ready_for_review) plus an
 `@claude` responder; secret `CLAUDE_CODE_OAUTH_TOKEN`. Every job skips (green) when the secret is

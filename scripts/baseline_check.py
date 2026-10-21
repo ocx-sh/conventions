@@ -37,7 +37,8 @@ def conditions(ans):
     full = ans.get("profile", "full") == "full"
     site = ans.get("site") or None
     return {"bazel": full and bool(ans.get("bazel")), "site": full and site is not None,
-            "site.deploy": full and site is not None and bool(site.get("deploy"))}
+            "site.deploy": full and site is not None and bool(site.get("deploy")),
+            "repo_workflows": full and bool(ans.get("repo_workflows"))}
 
 
 def owned_paths(manifest, ans):

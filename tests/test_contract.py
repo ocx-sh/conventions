@@ -41,7 +41,8 @@ def expected_files(name, cls=None):
     profile = a.get("profile", "full")
     site = a.get("site") or None
     cond = {"bazel": bool(a.get("bazel")) and profile == "full", "site": site is not None,
-            "site.deploy": site is not None and bool(site.get("deploy"))}
+            "site.deploy": site is not None and bool(site.get("deploy")),
+            "repo_workflows": profile == "full" and bool(a.get("repo_workflows"))}
     out = set()
     for f in manifest()["file"]:
         if profile not in f["profiles"]:
@@ -421,11 +422,12 @@ def test_c009_verify_basic_shape(rendered, name):
     want = {"lint", "basic-gate"}
     if full:
         want |= {"test"} | ({"build"} if a.get("bazel") else set()) | ({"docs"} if a.get("site") else set())
+        want |= {"repo"} if a.get("repo_workflows") else set()
     assert set(jobs) == want, f"C-009: verify-basic jobs {sorted(jobs)} != expected {sorted(want)}"
     gate = jobs["basic-gate"]
     assert "always()" in str(gate.get("if")), "C-009: basic-gate needs `if: always()`"
     assert set(gate.get("needs", [])) == want - {"basic-gate"}, "C-009: basic-gate must need every other job"
-    for role in want - {"basic-gate"}:
+    for role in want - {"basic-gate", "repo"}:
         job = jobs[role]
         setup = [s for s in steps(job) if "conventions/.github/actions/setup" in str(s.get("uses", ""))]
         assert setup and (setup[0].get("with") or {}).get("groups") == f"default,{role}", f"C-009: job {role} needs the setup action with groups: default,{role}"

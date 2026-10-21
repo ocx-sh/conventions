@@ -1,6 +1,8 @@
 {%- set ver = ((_copier_conf.vcs_ref or '') | regex_search('^v\\d[\\w.]*(?:-[\\w.]+)?$')) or 'v0' -%}
 {%- set setup = 'ocx-sh/conventions/.github/actions/setup@' ~ _copier_conf.vcs_ref_hash ~ ' # ' ~ ver -%}
 {%- set has_bazel = bazel -%}
+{%- set has_repo = repo_workflows -%}
+{%- set repo_secrets = repo_workflows.secrets if has_repo else [] -%}
 # ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update
 name: verify-deep
 
@@ -53,11 +55,26 @@ jobs:
           name: junit-{% raw %}${{ matrix.os }}{% endraw %}
           path: target/reports/junit
           if-no-files-found: ignore
+{%- if has_repo %}
+
+  # Repo-owned deep jobs: .github/workflows/deep-repo.yml is seeded once and belongs to the repo from then on.
+  repo:
+    if: {% raw %}github.event_name != 'pull_request' || github.event.label.name == 'run-deep'{% endraw %}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/deep-repo.yml
+{%- if repo_secrets %}
+    secrets:
+{%- for s in repo_secrets %}
+      {{ s }}: {% raw %}${{ secrets.{% endraw %}{{ s }}{% raw %} }}{% endraw %}
+{%- endfor %}
+{%- endif %}
+{%- endif %}
 
   # One issue labelled nightly-red: opened/updated on a red scheduled run, closed on the next green one.
   nightly-red:
     if: {% raw %}always() && github.event_name == 'schedule'{% endraw %}
-    needs: [deep]
+    needs: [deep{% if has_repo %}, repo{% endif %}]
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -67,9 +84,16 @@ jobs:
           GH_TOKEN: {% raw %}${{ github.token }}{% endraw %}
           REPO: {% raw %}${{ github.repository }}{% endraw %}
           RESULT: {% raw %}${{ needs.deep.result }}{% endraw %}
+{%- if has_repo %}
+          REPO_RESULT: {% raw %}${{ needs.repo.result }}{% endraw %}
+{%- endif %}
           RUN_URL: {% raw %}${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}{% endraw %}
         run: |
           set -euo pipefail
+{%- if has_repo %}
+          # A red repo-owned job reddens the night; a cancelled one leaves the issue as it is.
+          [ "$REPO_RESULT" = success ] || [ "$RESULT" = failure ] || RESULT=$REPO_RESULT
+{%- endif %}
           num=$(gh issue list --repo "$REPO" --label nightly-red --state open --json number --jq '.[0].number // empty')
           if [ "$RESULT" = success ]; then
             [ -z "$num" ] || gh issue close "$num" --repo "$REPO" --comment "Nightly green again: $RUN_URL"

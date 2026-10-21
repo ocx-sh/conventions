@@ -126,7 +126,8 @@ def test_c026_dogfood_answers_and_render_current(tmp_path):
     run(["uv", "run", "--project", REPO_ROOT, "copier", "copy", "--defaults", "--quiet", "--vcs-ref", str(root["_commit"]),
          "--data-file", data, REPO_ROOT, dest], REPO_ROOT, git_env_dict())
     a = want
-    cond = {"bazel": bool(a.get("bazel")), "site": bool(a.get("site")), "site.deploy": bool((a.get("site") or {}).get("deploy"))}
+    cond = {"bazel": bool(a.get("bazel")), "site": bool(a.get("site")), "site.deploy": bool((a.get("site") or {}).get("deploy")),
+            "repo_workflows": bool(a.get("repo_workflows"))}
     owned = {f["path"] for f in tomllib.loads((REPO_ROOT / "MANIFEST.toml").read_text())["file"]
              if f["class"] == "template-owned" and "full" in f["profiles"] and cond.get(f.get("when"), True)}
     owned.discard(".copier-answers.yml")  # carries _commit / _src_path, differs by construction

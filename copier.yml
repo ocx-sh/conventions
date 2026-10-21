@@ -15,6 +15,8 @@ _skip_if_exists:
   - .bazelrc
   - MODULE.bazel
   - .github/renovate-local.json
+  - .github/workflows/basic-repo.yml
+  - .github/workflows/deep-repo.yml
 
 repo_name:
   type: str
@@ -119,6 +121,33 @@ deep_os:
     {%- for o in deep_os if o not in allowed -%}
     Unknown deep_os '{{ o }}'; allowed: {{ allowed | join(', ') }}.{{ ' ' }}
     {%- endfor -%}
+
+repo_workflows:
+  type: yaml
+  help: >-
+    false, or a mapping {secrets: [NAME, ...]}. The repo owns .github/workflows/basic-repo.yml and deep-repo.yml, which
+    verify-basic and verify-deep call as their `repo` job; each listed secret is passed to them by name.
+  default: false
+  when: "{{ profile == 'full' }}"
+  validator: >-
+    {%- if repo_workflows is boolean -%}
+    {%- if repo_workflows -%}repo_workflows must be false or a mapping {secrets: [NAME, ...]}.{%- endif -%}
+    {%- elif repo_workflows is not mapping -%}
+    repo_workflows must be false or a mapping {secrets: [NAME, ...]}.
+    {%- else -%}
+    {%- for k in repo_workflows if k != 'secrets' -%}
+    Unknown repo_workflows key '{{ k }}'; allowed: secrets.{{ ' ' }}
+    {%- endfor -%}
+    {%- if 'secrets' not in repo_workflows -%}
+    repo_workflows.secrets is required (use [] for none).
+    {%- elif repo_workflows.secrets is string or repo_workflows.secrets is mapping or repo_workflows.secrets is not iterable -%}
+    repo_workflows.secrets must be a list of secret names.
+    {%- else -%}
+    {%- for s in repo_workflows.secrets if s is not string or not (s | regex_search('^[A-Za-z_][A-Za-z0-9_]*$')) or s.upper().startswith('GITHUB_') -%}
+    Invalid secret name '{{ s }}': letters, digits and underscores, not starting with a digit or GITHUB_.{{ ' ' }}
+    {%- endfor -%}
+    {%- endif -%}
+    {%- endif -%}
 
 theme_bundle:
   type: bool

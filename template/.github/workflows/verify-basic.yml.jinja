@@ -3,6 +3,8 @@
 {%- set full = profile == 'full' -%}
 {%- set has_bazel = full and bazel -%}
 {%- set has_site = full and site -%}
+{%- set has_repo = full and repo_workflows -%}
+{%- set repo_secrets = repo_workflows.secrets if has_repo else [] -%}
 # ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update
 name: verify-basic
 
@@ -115,11 +117,25 @@ jobs:
           retention-days: 14
           overwrite: true # a job rerun uploads the same name again; without it the step 409s and fails the job
 {%- endif %}
+{%- if has_repo %}
+
+  # Repo-owned jobs: .github/workflows/basic-repo.yml is seeded once and belongs to the repo from then on.
+  repo:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/basic-repo.yml
+{%- if repo_secrets %}
+    secrets:
+{%- for s in repo_secrets %}
+      {{ s }}: {% raw %}${{ secrets.{% endraw %}{{ s }}{% raw %} }}{% endraw %}
+{%- endfor %}
+{%- endif %}
+{%- endif %}
 
   # The single required check: every job succeeded (or was skipped).
   basic-gate:
     if: always()
-    needs: [lint{% if full %}, test{% endif %}{% if has_bazel %}, build{% endif %}{% if has_site %}, docs{% endif %}]
+    needs: [lint{% if full %}, test{% endif %}{% if has_bazel %}, build{% endif %}{% if has_site %}, docs{% endif %}{% if has_repo %}, repo{% endif %}]
     runs-on: ubuntu-latest
     permissions: {}
     steps:

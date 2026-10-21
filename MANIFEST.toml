@@ -1,7 +1,7 @@
 # Ownership contract: one [[file]] per rendered destination path. Tests and `baseline:check` read this file.
 # path = rendered path, sourced from src/<path> (src/<path>.jinja when copier renders it); class = template-owned | seeded-once;
 # scripts/build_template.py turns profiles/when into copier's conditional names under the generated template/.
-# profiles = which of full|mirror render it; when (optional) = bazel | site | site.deploy (all imply profile full; answers "bazel", "site" non-null, "site.deploy" true).
+# profiles = which of full|mirror render it; when (optional) = bazel | site | site.deploy | repo_workflows (all imply profile full; answers "bazel", "site" non-null, "site.deploy" true, "repo_workflows" not false).
 
 [removed_by_adoption]
 paths = [".github/dependabot.yml", "Taskfile.yml"]
@@ -126,6 +126,18 @@ profiles = ["full", "mirror"]
 path = ".github/renovate-local.json"
 class = "seeded-once"
 profiles = ["full", "mirror"]
+
+[[file]]
+path = ".github/workflows/basic-repo.yml"
+class = "seeded-once"
+profiles = ["full"]
+when = "repo_workflows"
+
+[[file]]
+path = ".github/workflows/deep-repo.yml"
+class = "seeded-once"
+profiles = ["full"]
+when = "repo_workflows"
 
 [[file]]
 path = ".bazelrc"
