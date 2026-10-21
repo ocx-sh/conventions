@@ -16,8 +16,8 @@ import yaml
 
 from conftest import FIXTURES, REPO_ROOT, git_env_dict, ocx_lock_committed, ocx_task, render_to, run
 
-ALL = ["full-bazel-site", "full-python-site", "full-minimal", "mirror"]
-FULL = ["full-bazel-site", "full-python-site", "full-minimal"]
+ALL = ["full-bazel-site", "full-python-site", "full-minimal", "full-ocx", "mirror"]
+FULL = ["full-bazel-site", "full-python-site", "full-minimal", "full-ocx"]
 LANGS = ["bazel", "cmake", "dotnet", "go", "jvm", "nix", "python", "rust", "shell", "swift", "typescript"]
 OS_ALL = ["ubuntu-latest", "macos-latest", "windows-latest"]
 SENTINEL = "# ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update"
