@@ -564,7 +564,8 @@ def expected_setup_sha(repo):
     dirty = bool(run(["git", "-C", REPO_ROOT, "status", "--porcelain", "--untracked-files=no"], REPO_ROOT).stdout.strip()) or \
         bool(run(["git", "-C", REPO_ROOT, "ls-files", "--others", "--exclude-standard"], REPO_ROOT).stdout.strip())
     commit = str(yaml.safe_load((repo / ".copier-answers.yml").read_text())["_commit"])
-    return (head, commit, dirty)
+    describe = re.search(r"-g([0-9a-f]+)$", commit)  # `git describe` form (v0.1.1-9-g616e8bb) once tags are reachable
+    return (head, describe.group(1) if describe else commit, dirty)
 
 
 @pytest.mark.parametrize("name", ALL)
