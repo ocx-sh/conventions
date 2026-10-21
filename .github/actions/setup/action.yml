@@ -14,7 +14,11 @@ inputs:
     required: false
     default: ""
   bazel-cache:
-    description: "Remote cache mode: off | read | write. `write` only takes effect on a push to the default branch."
+    description: >-
+      Remote cache mode: off | read | write | trusted. `write` only takes effect on a push to the default branch.
+      `trusted` presents the write credential on every event that carries it and ignores `cache-read-auth`: the
+      caller vouches that the job runs no untrusted code with it. A helper script serves the credential, so Windows
+      runners are skipped.
     required: false
     default: "off"
   cache-read-auth:
@@ -22,7 +26,9 @@ inputs:
     required: false
     default: ""
   cache-write-auth:
-    description: Write credential, same shape. Used only for bazel-cache=write on a default-branch push.
+    description: >-
+      Write credential, same shape. Used for bazel-cache=write on a default-branch push and for bazel-cache=trusted
+      on every event. A malformed value fails the step in trusted mode.
     required: false
     default: ""
   otel-auth:
@@ -57,7 +63,7 @@ runs:
     # a write secret writes nothing.
     - name: Write Bazel cache rc
       if: >-
-        inputs.report == '' && inputs.bazel-cache != 'off' &&
+        inputs.report == '' && inputs.bazel-cache != 'off' && inputs.bazel-cache != 'trusted' &&
         (inputs.cache-read-auth != '' ||
         (inputs.bazel-cache == 'write' && inputs.cache-write-auth != '' &&
         github.event_name == 'push' &&
@@ -79,6 +85,47 @@ runs:
         # baseline.bazelrc try-imports .bazelrc.user; forward slashes for Windows.
         rcpath="${rc//\\//}"
         echo "try-import $rcpath" >> "${GITHUB_WORKSPACE:-.}/.bazelrc.user"
+
+    # Mode `trusted`: no event predicate, by design. A fork PR gets empty secrets, so it has no credential to write
+    # and reads uncached; the step skips on the empty input rather than failing. The credential is served by a helper
+    # under $RUNNER_TEMP, named by an rc file outside the workspace (BZL-CACHE-04: Bazel runs a helper it finds in the
+    # checkout with the full environment). The golden text is tests/golden/trusted-cache.rc.
+    - name: Write Bazel cache rc (trusted)
+      if: >-
+        inputs.report == '' && inputs.bazel-cache == 'trusted' && inputs.cache-write-auth != '' &&
+        runner.os != 'Windows'
+      shell: bash
+      env:
+        AUTH: ${{ inputs.cache-write-auth }}
+      run: |
+        set -euo pipefail
+        [ -n "$AUTH" ] || exit 0
+        # `<header>=<value>` goes into a JSON document verbatim; refuse anything outside the alphabets of
+        # `authorization=Basic <base64>` so no character needs escaping. Validation runs before the mask
+        # command is echoed: a value with a line break would print its later lines unmasked.
+        header="${AUTH%%=*}"
+        value="${AUTH#*=}"
+        name_re='^[A-Za-z0-9-]+$'
+        value_re='^[A-Za-z0-9+/= ]+$'
+        if [[ "$AUTH" != *=* ]] || ! [[ "$header" =~ $name_re ]] || ! [[ "$value" =~ $value_re ]]; then
+          echo "::error title=Bazel cache::cache-write-auth is not '<header>=<value>' (expected 'authorization=Basic <base64 of user:password>')"
+          exit 1
+        fi
+        echo "::add-mask::$AUTH"
+        umask 077
+        helper="$RUNNER_TEMP/bazel-cache-helper"
+        rc="$RUNNER_TEMP/bazel-cache.rc"
+        rm -f "$helper" "$rc"
+        {
+          printf '#!/bin/sh\n'
+          printf 'cat >/dev/null\n'
+          printf "cat <<'EOF'\n"
+          printf '{"headers":{"%s":["%s"]}}\n' "$header" "$value"
+          printf 'EOF\n'
+        } > "$helper"
+        chmod 700 "$helper"
+        printf 'build --credential_helper=bazel-cache.ocx.sh=%s\nbuild --remote_upload_local_results=true\n' "$helper" > "$rc"
+        echo "try-import $rc" >> "${GITHUB_WORKSPACE:-.}/.bazelrc.user"
 
     - name: Export OTLP telemetry
       if: inputs.report == '' && inputs.otel-auth != ''
