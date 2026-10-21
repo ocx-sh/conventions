@@ -104,3 +104,58 @@ def test_c028_malformed_repo_workflows_fails(tmp_path, bad):
 def test_c028_mirror_profile_ignores_repo_workflows(tmp_path):
     repo = render_to(answers_file(tmp_path, "mirror", repo_workflows={"secrets": ["A"]}), tmp_path / "out")
     assert not (repo / ".github/workflows/basic-repo.yml").exists(), "C-028: profile mirror must not render repo workflows"
+
+
+# ---------------------------------------------------------------- C-029 bazel_cache_write
+
+WRITE_SECRET = "${{ secrets.BAZEL_CACHE_WRITE_AUTH }}"
+
+
+def setup_withs(repo, workflow):
+    """The `with:` of every main setup step (the ones that install groups) per job."""
+    out = {}
+    for jname, job in jobs(repo, workflow).items():
+        for s in job.get("steps", []):
+            if "conventions/.github/actions/setup" in str(s.get("uses", "")) and "groups" in (s.get("with") or {}):
+                out[jname] = s["with"]
+    return out
+
+
+def test_c029_trusted_presents_the_write_credential_in_every_ci_job(tmp_path):
+    repo = render_to(answers_file(tmp_path, "full-bazel-site", bazel_cache_write="trusted"), tmp_path / "out")
+    basic, deep = setup_withs(repo, "verify-basic.yml"), setup_withs(repo, "verify-deep.yml")
+    assert set(basic) == {"lint", "test", "build", "docs"} and set(deep) == {"deep"}, f"C-029 jobs found: {sorted(basic)} {sorted(deep)}"
+    for where, withs in (("verify-basic", basic), ("verify-deep", deep)):
+        for jname, w in withs.items():
+            assert w.get("bazel-cache") == "trusted" and w.get("cache-write-auth") == WRITE_SECRET, \
+                f"C-029 {where} job {jname} must run the setup action with bazel-cache: trusted and the write secret: {w}"
+            assert "cache-read-auth" not in w, f"C-029 {where} job {jname} presents one credential per lane, not also the read one"
+
+
+def test_c029_trusted_write_secret_carries_no_event_predicate(tmp_path):
+    repo = render_to(answers_file(tmp_path, "full-bazel-site", bazel_cache_write="trusted"), tmp_path / "out")
+    for wf in ("verify-basic.yml", "verify-deep.yml", "claude.yml"):
+        text = (repo / ".github" / "workflows" / wf).read_text()
+        for line in (ln for ln in text.splitlines() if "BAZEL_CACHE_WRITE_AUTH" in ln):
+            assert line.strip().endswith(WRITE_SECRET) and "github." not in line, f"C-029 {wf}: bare secret expected, got {line.strip()!r}"
+
+
+@pytest.mark.parametrize("answers", [{}, {"bazel_cache_write": "main"}])
+def test_c029_main_is_the_default_and_keeps_push_to_main_only(tmp_path, answers):
+    repo = render_to(answers_file(tmp_path, "full-bazel-site", **answers), tmp_path / "out")
+    for wf in ("verify-basic.yml", "verify-deep.yml"):
+        assert "trusted" not in (repo / ".github" / "workflows" / wf).read_text(), f"C-029 {wf}: mode main must not render trusted"
+    assert setup_withs(repo, "verify-deep.yml")["deep"]["bazel-cache"] == "read", "C-029 mode main keeps the read-only deep cache"
+    assert "cache-write-auth" not in setup_withs(repo, "verify-basic.yml")["lint"], "C-029 mode main gives the lint job no cache credential"
+
+
+def test_c029_trusted_without_bazel_renders_no_cache_inputs(tmp_path):
+    repo = render_to(answers_file(tmp_path, "full-minimal", bazel_cache_write="trusted"), tmp_path / "out")
+    for wf in ("verify-basic.yml", "verify-deep.yml"):
+        assert "trusted" not in (repo / ".github" / "workflows" / wf).read_text(), f"C-029 {wf}: no bazel, no cache inputs"
+
+
+def test_c029_unknown_mode_fails(tmp_path):
+    with pytest.raises(subprocess.CalledProcessError) as e:
+        render_to(answers_file(tmp_path, "full-bazel-site", bazel_cache_write="everyone"), tmp_path / "out")
+    assert "bazel_cache_write" in (e.value.stdout or "") + (e.value.stderr or ""), "C-029 an unknown mode must fail naming bazel_cache_write"

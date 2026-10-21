@@ -122,6 +122,17 @@ deep_os:
     Unknown deep_os '{{ o }}'; allowed: {{ allowed | join(', ') }}.{{ ' ' }}
     {%- endfor -%}
 
+bazel_cache_write:
+  type: str
+  help: >-
+    Who may write the Bazel remote cache. `main`: only a push to main, every other event reads. `trusted`: every job
+    that runs a ci:* task presents the write credential on every event that carries it (a fork PR carries none).
+  choices:
+    - main
+    - trusted
+  default: main
+  when: "{{ profile == 'full' and bazel }}"
+
 repo_workflows:
   type: yaml
   help: >-

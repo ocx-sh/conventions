@@ -2,6 +2,7 @@
 {%- set setup = 'ocx-sh/conventions/.github/actions/setup@' ~ _copier_conf.vcs_ref_hash ~ ' # ' ~ ver -%}
 {%- set full = profile == 'full' -%}
 {%- set has_bazel = full and bazel -%}
+{%- set trusted = has_bazel and bazel_cache_write == 'trusted' -%}
 {%- set has_site = full and site -%}
 {%- set has_repo = full and repo_workflows -%}
 {%- set repo_secrets = repo_workflows.secrets if has_repo else [] -%}
@@ -34,6 +35,10 @@ jobs:
       - uses: {{ setup }}
         with:
           groups: default,lint
+{%- if trusted %}
+          bazel-cache: trusted
+          cache-write-auth: {% raw %}${{ secrets.BAZEL_CACHE_WRITE_AUTH }}{% endraw %}
+{%- endif %}
       - run: task ci:lint
       - run: task lock:check
       - run: task baseline:check
@@ -55,6 +60,10 @@ jobs:
       - uses: {{ setup }}
         with:
           groups: default,test
+{%- if trusted %}
+          bazel-cache: trusted
+          cache-write-auth: {% raw %}${{ secrets.BAZEL_CACHE_WRITE_AUTH }}{% endraw %}
+{%- endif %}
           otel-auth: {% raw %}${{ secrets.OTEL_OTLP_AUTH }}{% endraw %}
       - run: task ci:test
       - name: Push JUnit telemetry
@@ -85,11 +94,17 @@ jobs:
       - uses: {{ setup }}
         with:
           groups: default,build
+{%- if trusted %}
+          # Org secret, presented on every event that carries it; fork PRs see empty secrets and run uncached.
+          bazel-cache: trusted
+          cache-write-auth: {% raw %}${{ secrets.BAZEL_CACHE_WRITE_AUTH }}{% endraw %}
+{%- else %}
           # Org secrets. Cache writes only on a push to main (read credential everywhere else); fork PRs see
           # empty secrets and run uncached.
           bazel-cache: {% raw %}${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'write' || 'read' }}{% endraw %}
           cache-read-auth: {% raw %}${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') && secrets.BAZEL_CACHE_READ_AUTH || '' }}{% endraw %}
           cache-write-auth: {% raw %}${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') && secrets.BAZEL_CACHE_WRITE_AUTH || '' }}{% endraw %}
+{%- endif %}
           otel-auth: {% raw %}${{ secrets.OTEL_OTLP_AUTH }}{% endraw %}
       - run: task ci:build
 {%- endif %}
@@ -106,6 +121,10 @@ jobs:
       - uses: {{ setup }}
         with:
           groups: default,docs
+{%- if trusted %}
+          bazel-cache: trusted
+          cache-write-auth: {% raw %}${{ secrets.BAZEL_CACHE_WRITE_AUTH }}{% endraw %}
+{%- endif %}
       - run: task ci:docs
       - name: Upload docs reports
         if: always()

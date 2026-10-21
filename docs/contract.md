@@ -15,6 +15,7 @@ template-owned file: change `ocx-sh/conventions` and run `task copier:update`.
 | `site` | null or `{dir, dist, deploy: bool, path?}` | full only; `path` optional, may be empty |
 | `deep_os` | subset of `ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, macos-26, windows-latest, windows-11-arm`; default `[ubuntu-latest]` | full only |
 | `theme_bundle` | bool, default `site is not none` | full only |
+| `bazel_cache_write` | `main` (default) \| `trusted` | full with `bazel`; `trusted` makes every job that runs a `ci:*` task (lint, test, build, docs, deep) present the write secret on every event that carries it |
 | `repo_workflows` | `false` (default) or `{secrets: [NAME, ...]}`; names are letters, digits, underscores, not starting with a digit or `GITHUB_` | full only; adds the `repo` job to `verify-basic` and `verify-deep` and seeds `basic-repo.yml` and `deep-repo.yml` |
 
 The template uses no `_tasks`, `_migrations` or `_jinja_extensions`: `--trust` is never needed.
@@ -91,6 +92,11 @@ credential only on `github.event_name == 'push' && github.ref == 'refs/heads/mai
 credential everywhere else; OTel export happens only when `OTEL_OTLP_AUTH` is non-empty, so fork PRs
 and runs without the secrets stay green. (The `renovate` and `ocx.sh` environments are separate.)
 
+With `bazel_cache_write = trusted`, `lint`, `test`, `build`, `docs` and the deep matrix instead call the setup action
+with `bazel-cache: trusted` and `cache-write-auth: ${{ secrets.BAZEL_CACHE_WRITE_AUTH }}`, no event predicate and no read
+credential (one credential per lane). The answer is the repo's statement that those jobs run no untrusted code with the
+secret; a fork PR still carries no secret, so it reads uncached.
+
 **`verify-deep.yml`** (full) — triggers `schedule` (daily 03:MM UTC, `MM = int(sha256(repo_name)[:4], 16) % 60`),
 `workflow_dispatch`, `workflow_call`, and `pull_request: types: [labeled]` gated on label `run-deep`.
 Matrix over `deep_os`, runs `task ci:deep` (Bazel repos: `--config=ci` plus `test:deep`). A failed
@@ -118,7 +124,7 @@ only, environment `ocx.sh`, uses the pinned `ocx-sh/website/.github/actions/depl
 | Input | Meaning |
 |---|---|
 | `groups` | ocx groups to install, e.g. `default,lint` |
-| `bazel-cache` | `off` (default) \| `read` \| `write`; write only on `push: main` |
+| `bazel-cache` | `off` (default) \| `read` \| `write` \| `trusted`; `write` only on `push: main`, `trusted` on every event that carries `cache-write-auth` |
 | `cache-read-auth`, `cache-write-auth`, `otel-auth` | secrets passed by the caller |
 
 Installs ocx through setup-ocx (pinned SHA, baseline ocx CLI version, `groups`). When `bazel-cache`
@@ -126,6 +132,12 @@ is not `off` and the auth is non-empty it writes `$RUNNER_TEMP/bazel-cache.rc` w
 and exports the `BAZELRC` import; when `otel-auth` is non-empty it exports
 `OTEL_EXPORTER_OTLP_ENDPOINT=https://otel.ocx.sh` plus headers. Empty secrets (fork PRs) degrade to no
 cache / no telemetry and never fail. A warning-only `if: always()` post step ships test telemetry.
+
+Mode `trusted` ignores `cache-read-auth`. With `cache-write-auth` set (and a non-Windows runner) it writes, owner-only,
+`$RUNNER_TEMP/bazel-cache-helper` (mode 0700, a `/bin/sh` script that answers Bazel's credential request with the
+`<header>=<value>` pair) and `$RUNNER_TEMP/bazel-cache.rc` (mode 0600), exactly the two lines of
+[`tests/golden/trusted-cache.rc`](../tests/golden/trusted-cache.rc), and imports the rc through `.bazelrc.user`. A malformed
+credential fails the step without echoing it; an empty one writes nothing.
 
 ## Bazel fragment (`bazel/baseline.bazelrc`, when `bazel`)
 
