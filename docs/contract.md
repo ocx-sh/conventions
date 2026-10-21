@@ -13,7 +13,7 @@ template-owned file: change `ocx-sh/conventions` and run `task copier:update`.
 | `bazel` | bool, default false | full only |
 | `languages` | multiselect: bazel, cmake, dotnet, go, jvm, nix, python, rust, shell, swift, typescript | full only; unknown entry fails naming the allowed list |
 | `site` | null or `{dir, dist, deploy: bool, path?}` | full only; `path` optional, may be empty |
-| `deep_os` | subset of `ubuntu-latest, macos-latest, windows-latest`; default `[ubuntu-latest]` | full only |
+| `deep_os` | subset of `ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, macos-26, windows-latest, windows-11-arm`; default `[ubuntu-latest]` | full only |
 | `theme_bundle` | bool, default `site is not none` | full only |
 
 The template uses no `_tasks`, `_migrations` or `_jinja_extensions`: `--trust` is never needed.
