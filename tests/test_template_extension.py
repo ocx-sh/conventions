@@ -317,3 +317,20 @@ def test_c032_every_secret_verify_deep_reads_is_declared(tmp_path, base, overrid
     read = set(READ.findall(text))
     assert read <= set(called_secrets(repo)), \
         f"C-032 verify-deep reads secrets its workflow_call does not declare (they arrive empty in a called run): {sorted(read - set(called_secrets(repo)))}"
+
+
+# ---------------------------------------------------------------- C-033 submodule checkouts
+
+@pytest.mark.parametrize("base", ["full-minimal", "full-bazel-site", "full-python-site", "full-ocx"])
+def test_c033_every_verify_checkout_fetches_submodules_recursively(tmp_path, base):
+    repo = render_to(base, tmp_path / "out")
+    seen = 0
+    for wf in ("verify-basic.yml", "verify-deep.yml"):
+        for jname, job in jobs(repo, wf).items():
+            for s in job.get("steps", []):
+                if str(s.get("uses", "")).startswith("actions/checkout@"):
+                    seen += 1
+                    assert (s.get("with") or {}).get("submodules") == "recursive", \
+                        f"C-033 {wf} job {jname}: a repo that vendors submodules (ocx, grimoire) builds nothing without them: {s.get('with')}"
+                    assert (s.get("with") or {}).get("persist-credentials") is False, f"C-033 {wf} job {jname} still drops the token"
+    assert seen >= 3, f"C-033 expected the lint, test and deep checkouts at least: saw {seen}"

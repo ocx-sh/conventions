@@ -110,6 +110,9 @@ with `bazel-cache: trusted` and `cache-write-auth: ${{ secrets.BAZEL_CACHE_WRITE
 credential (one credential per lane). The answer is the repo's statement that those jobs run no untrusted code with the
 secret; a fork PR still carries no secret, so it reads uncached.
 
+Every checkout in `verify-basic.yml` and `verify-deep.yml` uses `persist-credentials: false` and `submodules: recursive` (a no-op
+without a `.gitmodules`); a repo that vendors submodules (ocx, grimoire, ocx-mirror) builds nothing without them.
+
 **`verify-deep.yml`** (full) — triggers `schedule` (daily 03:MM UTC, `MM = int(sha256(repo_name)[:4], 16) % 60`),
 `workflow_dispatch`, `workflow_call`, and `pull_request: types: [labeled]` gated on label `run-deep`.
 Matrix over `deep_os`, runs `task ci:deep` (Bazel repos: `--config=ci` plus `test:deep`). A failed
