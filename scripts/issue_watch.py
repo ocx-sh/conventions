@@ -99,7 +99,7 @@ def main():
     hook = os.environ.get("OCX_ISSUES_HOOK")
     if not hook:
         sys.exit("issue_watch.py: OCX_ISSUES_HOOK is empty")
-    req = urllib.request.Request(hook, json.dumps(body).encode(), {"Content-Type": "application/json"})
+    req = urllib.request.Request(hook, json.dumps(body).encode(), {"Content-Type": "application/json", "User-Agent": "ocx-conventions-issue-watch"})  # Discord 403s urllib's default UA
     urllib.request.urlopen(req, timeout=30).close()
     print(f"posted {len(rows)} issue(s)")
 
