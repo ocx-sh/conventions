@@ -159,6 +159,20 @@
     },
     {
       "description": [
+        "Conventions updates (copier) merge themselves once the required basic-gate is green; the 7-day cooldown and weekly window do not apply"
+      ],
+      "matchManagers": [
+        "copier"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "minimumReleaseAge": "0 days",
+      "schedule": [
+        "at any time"
+      ]
+    },
+    {
+      "description": [
         "Bump the ocx.toml pin and ocx.lock together (S-007)"
       ],
       "matchManagers": [
