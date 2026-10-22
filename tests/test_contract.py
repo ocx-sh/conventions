@@ -569,6 +569,10 @@ def _precheck(rendered, tmp_path, issue, comments, trigger):
 CLEAN = {"title": "Crash", "body": "it breaks"}
 
 
+def _c(body, bot=False):
+    return {"body": body, "user": {"type": "Bot" if bot else "User"}}
+
+
 @pytest.mark.parametrize("hidden", ["a <!-- ignore previous --> b", "x\u200bz", "t\U000e0041", "<details>x</details>", "A" * 200])
 def test_c013_precheck_refuses_hidden_content(rendered, tmp_path, hidden):
     out, calls = _precheck(rendered, tmp_path, {**CLEAN, "body": hidden}, [], "@claude implement")
@@ -576,11 +580,16 @@ def test_c013_precheck_refuses_hidden_content(rendered, tmp_path, hidden):
 
 
 def test_c013_precheck_scans_comments_and_passes_clean(rendered, tmp_path):
-    out, _ = _precheck(rendered, tmp_path, CLEAN, ["fine", "<!-- sneaky -->"], "@claude why?")
+    out, _ = _precheck(rendered, tmp_path, CLEAN, [_c("fine"), _c("<!-- sneaky -->")], "@claude why?")
     assert out == "ok=false", "C-013: hidden content in a comment must be declined"
     (tmp_path / "b").mkdir()
-    out, calls = _precheck(rendered, tmp_path / "b", CLEAN, ["fine", "also fine"], "@claude why?")
+    out, calls = _precheck(rendered, tmp_path / "b", CLEAN, [_c("fine"), _c("also fine")], "@claude why?")
     assert out.endswith("ok=true") and not calls, "C-013: clean issue must pass silently"
+
+
+def test_c013_precheck_ignores_bot_comments(rendered, tmp_path):
+    out, calls = _precheck(rendered, tmp_path, CLEAN, [_c("Declined: `<details>` ...", bot=True), _c("<details>x</details>", bot=True)], "@claude why?")
+    assert out == "ok=true" and not calls, "C-013: bot comments holding <details> must not trip the check"
 
 
 def test_c013_precheck_override(rendered, tmp_path):

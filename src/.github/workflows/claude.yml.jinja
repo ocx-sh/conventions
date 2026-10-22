@@ -136,7 +136,9 @@ jobs:
               raise SystemExit
           issue = json.loads(gh("api", f"repos/{repo}/issues/{num}"))
           texts = [issue["title"] or "", issue["body"] or ""]
-          texts += [json.loads(l) for l in gh("api", "--paginate", f"repos/{repo}/issues/{num}/comments", "--jq", ".[].body | @json").splitlines() if l]
+          # Bot comments are skipped: our own decline message and Claude's replies may legitimately hold `<details>`.
+          cs = [json.loads(l) for l in gh("api", "--paginate", f"repos/{repo}/issues/{num}/comments", "--jq", ".[] | @json").splitlines() if l]
+          texts += [c["body"] for c in cs if c["user"]["type"] != "Bot"]
           hidden = re.compile(
               r"<!--|<details\b|[A-Za-z0-9+/]{200,}={0,2}"
               "|[\u200b-\u200f\u202a-\u202e\u2060-\u2064\U000e0000-\U000e007f]", re.I)
