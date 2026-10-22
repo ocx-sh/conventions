@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: v0.1.0-2-g5bc9207
+_commit: v0.1.1-11-gbc40a05
 _src_path: https://github.com/ocx-sh/conventions.git
 bazel: false
 deep_os:
@@ -7,7 +7,10 @@ deep_os:
 languages:
 - python
 - shell
+maintainers:
+- michael-herwig
 profile: full
 repo_name: conventions
+repo_owner: ocx-sh
 site: null
 theme_bundle: false
