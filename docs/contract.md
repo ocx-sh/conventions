@@ -51,7 +51,7 @@ offers the menu; without one, a missing var exits non-zero with the usage line.
 
 ## `ocx.toml` and `grimoire.toml`
 
-- Every tool ref is an exact `X.Y.Z` (no `latest`, no major/minor-only tag); `ocx.lock` is tracked and current.
+- Every tool ref is an exact `X.Y.Z` (no `latest`, no major/minor-only tag); the one exception is profile `mirror`, whose `ocx.sh/ocx/cli` and `ocx.sh/ocx/mirror` float the minor (`:0.6`); `ocx.lock` is tracked and current.
 - `[tools]` (default) holds `task` only. Groups: `lint`, `test`, `build`, `docs`, `release`.
   Baseline tools: task, prek, gitleaks, grim, uv (`lint`), git-cliff (`release`).
 - `grimoire.toml`: `clients` contains claude, codex, opencode; bundles contain `docs-essentials`,

@@ -26,6 +26,7 @@ BASELINE_TASKS = ["setup", "hooks:install", "lock:check", "grim:check", "secrets
 ROOT_TASKS = ["verify", "ci:lint", "ci:test", "ci:build", "ci:docs", "ci:deep"]
 CLIENTS = {"claude", "codex", "opencode"}
 REF = re.compile(r"^[^:\s]+:\d+\.\d+\.\d+([-+_][\w.+-]*)?$")
+MIRROR_FLOAT = re.compile(r"^ocx\.sh/ocx/(cli|mirror):\d+\.\d+$")
 FIX = "change ocx-sh/conventions instead, then run task copier:update"
 
 
@@ -120,7 +121,7 @@ def ocx_tools(cfg):
     return out
 
 
-def check_ocx(repo, fails):
+def check_ocx(repo, fails, mirror=False):
     """C-005: exact pins, baseline tools, D-04 groups, ocx.lock tracked. Returns the tool map for Q7."""
     p = repo / "ocx.toml"
     if not p.is_file():
@@ -130,6 +131,8 @@ def check_ocx(repo, fails):
     cfg = tomllib.loads(text)
     tools = ocx_tools(cfg)
     for (g, k), ref in tools.items():
+        if mirror and isinstance(ref, str) and MIRROR_FLOAT.match(ref):
+            continue  # ocx-contrib/CLAUDE.md: the mirror toolchain floats the minor so a plain `ocx update` picks up patches
         if not (isinstance(ref, str) and REF.match(ref)):
             fails.append(f"C-005: ocx.toml:{line_of(text, k)}: tool '{k}' [{g}] must pin an exact X.Y.Z version, got {ref!r}")
     for g, k in BASELINE_TOOLS:
@@ -246,7 +249,7 @@ def main():
         sys.exit(f"baseline:check: cannot read .copier-answers.yml or the template MANIFEST.toml: {e}")
     drift(tmpl, repo, ans, manifest, str(ans.get("_commit", "")), a.commit_unresolved, fails)
     check_tasks(repo, ans, a.task, fails)
-    tools = check_ocx(repo, fails)
+    tools = check_ocx(repo, fails, mirror=ans.get("profile") == "mirror")
     check_grim(repo, ans, fails)
     check_bazel(repo, tmpl, ans, fails)
     check_pnpm(repo, ans, tools, fails)
