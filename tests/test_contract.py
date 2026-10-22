@@ -540,6 +540,12 @@ def test_c013_issue_handler_is_branch_only(rendered, name):
     assert "mcp__github_file_ops__commit_files" in args, "C-013: issue handler commits through the API tool"
     assert job["permissions"] == {"contents": "write", "issues": "write", "pull-requests": "read"}, "C-013: issue handler permissions"
     assert "id-token" not in job["permissions"], "C-013: issue handler needs no id-token"
+    sl = steps(job)
+    pre = next(i for i, s in enumerate(sl) if s.get("id") == "precheck")
+    for sname in ("Checkout", "Handle @claude"):
+        i = next(i for i, s in enumerate(sl) if s.get("name") == sname)
+        assert i > pre and sl[i].get("if") == "steps.precheck.outputs.ok == 'true'", \
+            f"C-013: issue handler step {sname!r} must follow the precheck and be gated on its ok output"
     assert "!github.event.issue.pull_request" in job["if"], "C-013: issue handler must skip PR comments"
     resp = yaml.safe_load(need("C-013", rendered(name), ".github/workflows/claude.yml").read_text())["jobs"]["respond"]
     assert "github.event.issue.pull_request" in resp["if"], "C-013: PR responder must not also fire on plain issues"
