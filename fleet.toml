@@ -380,3 +380,1105 @@ path = "grimoire-components"
 adopted = false
 excluded = true
 reason = "GitLab-hosted, outside the GitHub fleet (D-10)"
+
+# ---- iteration 3: mirrors ----
+
+[repos.mirror-actionlint]
+repo = "ocx-contrib/mirror-actionlint"
+path = "ocx-contrib/mirror-actionlint"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-actionlint.answers]
+repo_name = "mirror-actionlint"
+profile = "mirror"
+
+[repos.mirror-adoptium]
+repo = "ocx-contrib/mirror-adoptium"
+path = "ocx-contrib/mirror-adoptium"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-adoptium.answers]
+repo_name = "mirror-adoptium"
+profile = "mirror"
+
+[repos.mirror-age]
+repo = "ocx-contrib/mirror-age"
+path = "ocx-contrib/mirror-age"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-age.answers]
+repo_name = "mirror-age"
+profile = "mirror"
+
+[repos.mirror-amazon]
+repo = "ocx-contrib/mirror-amazon"
+path = "ocx-contrib/mirror-amazon"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-amazon.answers]
+repo_name = "mirror-amazon"
+profile = "mirror"
+
+[repos.mirror-anchore]
+repo = "ocx-contrib/mirror-anchore"
+path = "ocx-contrib/mirror-anchore"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-anchore.answers]
+repo_name = "mirror-anchore"
+profile = "mirror"
+
+[repos.mirror-anomalyco]
+repo = "ocx-contrib/mirror-anomalyco"
+path = "ocx-contrib/mirror-anomalyco"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-anomalyco.answers]
+repo_name = "mirror-anomalyco"
+profile = "mirror"
+
+[repos.mirror-aquasecurity]
+repo = "ocx-contrib/mirror-aquasecurity"
+path = "ocx-contrib/mirror-aquasecurity"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-aquasecurity.answers]
+repo_name = "mirror-aquasecurity"
+profile = "mirror"
+
+[repos.mirror-asciinema]
+repo = "ocx-contrib/mirror-asciinema"
+path = "ocx-contrib/mirror-asciinema"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-asciinema.answers]
+repo_name = "mirror-asciinema"
+profile = "mirror"
+
+[repos.mirror-astral-sh]
+repo = "ocx-contrib/mirror-astral-sh"
+path = "ocx-contrib/mirror-astral-sh"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-astral-sh.answers]
+repo_name = "mirror-astral-sh"
+profile = "mirror"
+
+[repos.mirror-axodotdev]
+repo = "ocx-contrib/mirror-axodotdev"
+path = "ocx-contrib/mirror-axodotdev"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-axodotdev.answers]
+repo_name = "mirror-axodotdev"
+profile = "mirror"
+
+[repos.mirror-bazel-lsp]
+repo = "ocx-contrib/mirror-bazel-lsp"
+path = "ocx-contrib/mirror-bazel-lsp"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-bazel-lsp.answers]
+repo_name = "mirror-bazel-lsp"
+profile = "mirror"
+
+[repos.mirror-bazelbuild]
+repo = "ocx-contrib/mirror-bazelbuild"
+path = "ocx-contrib/mirror-bazelbuild"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-bazelbuild.answers]
+repo_name = "mirror-bazelbuild"
+profile = "mirror"
+
+[repos.mirror-biomejs]
+repo = "ocx-contrib/mirror-biomejs"
+path = "ocx-contrib/mirror-biomejs"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-biomejs.answers]
+repo_name = "mirror-biomejs"
+profile = "mirror"
+
+[repos.mirror-bottom]
+repo = "ocx-contrib/mirror-bottom"
+path = "ocx-contrib/mirror-bottom"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-bottom.answers]
+repo_name = "mirror-bottom"
+profile = "mirror"
+
+[repos.mirror-bufbuild]
+repo = "ocx-contrib/mirror-bufbuild"
+path = "ocx-contrib/mirror-bufbuild"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-bufbuild.answers]
+repo_name = "mirror-bufbuild"
+profile = "mirror"
+
+[repos.mirror-caddyserver]
+repo = "ocx-contrib/mirror-caddyserver"
+path = "ocx-contrib/mirror-caddyserver"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-caddyserver.answers]
+repo_name = "mirror-caddyserver"
+profile = "mirror"
+
+[repos.mirror-ccache]
+repo = "ocx-contrib/mirror-ccache"
+path = "ocx-contrib/mirror-ccache"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-ccache.answers]
+repo_name = "mirror-ccache"
+profile = "mirror"
+
+[repos.mirror-charmbracelet]
+repo = "ocx-contrib/mirror-charmbracelet"
+path = "ocx-contrib/mirror-charmbracelet"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-charmbracelet.answers]
+repo_name = "mirror-charmbracelet"
+profile = "mirror"
+
+[repos.mirror-cocogitto]
+repo = "ocx-contrib/mirror-cocogitto"
+path = "ocx-contrib/mirror-cocogitto"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-cocogitto.answers]
+repo_name = "mirror-cocogitto"
+profile = "mirror"
+
+[repos.mirror-crate-ci]
+repo = "ocx-contrib/mirror-crate-ci"
+path = "ocx-contrib/mirror-crate-ci"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-crate-ci.answers]
+repo_name = "mirror-crate-ci"
+profile = "mirror"
+
+[repos.mirror-cyclonedx]
+repo = "ocx-contrib/mirror-cyclonedx"
+path = "ocx-contrib/mirror-cyclonedx"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-cyclonedx.answers]
+repo_name = "mirror-cyclonedx"
+profile = "mirror"
+
+[repos.mirror-delta]
+repo = "ocx-contrib/mirror-delta"
+path = "ocx-contrib/mirror-delta"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-delta.answers]
+repo_name = "mirror-delta"
+profile = "mirror"
+
+[repos.mirror-denoland]
+repo = "ocx-contrib/mirror-denoland"
+path = "ocx-contrib/mirror-denoland"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-denoland.answers]
+repo_name = "mirror-denoland"
+profile = "mirror"
+
+[repos.mirror-difftastic]
+repo = "ocx-contrib/mirror-difftastic"
+path = "ocx-contrib/mirror-difftastic"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-difftastic.answers]
+repo_name = "mirror-difftastic"
+profile = "mirror"
+
+[repos.mirror-direnv]
+repo = "ocx-contrib/mirror-direnv"
+path = "ocx-contrib/mirror-direnv"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-direnv.answers]
+repo_name = "mirror-direnv"
+profile = "mirror"
+
+[repos.mirror-dive]
+repo = "ocx-contrib/mirror-dive"
+path = "ocx-contrib/mirror-dive"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-dive.answers]
+repo_name = "mirror-dive"
+profile = "mirror"
+
+[repos.mirror-docker]
+repo = "ocx-contrib/mirror-docker"
+path = "ocx-contrib/mirror-docker"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-docker.answers]
+repo_name = "mirror-docker"
+profile = "mirror"
+
+[repos.mirror-dprint]
+repo = "ocx-contrib/mirror-dprint"
+path = "ocx-contrib/mirror-dprint"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-dprint.answers]
+repo_name = "mirror-dprint"
+profile = "mirror"
+
+[repos.mirror-duckdb]
+repo = "ocx-contrib/mirror-duckdb"
+path = "ocx-contrib/mirror-duckdb"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-duckdb.answers]
+repo_name = "mirror-duckdb"
+profile = "mirror"
+
+[repos.mirror-dust]
+repo = "ocx-contrib/mirror-dust"
+path = "ocx-contrib/mirror-dust"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-dust.answers]
+repo_name = "mirror-dust"
+profile = "mirror"
+
+[repos.mirror-elvish]
+repo = "ocx-contrib/mirror-elvish"
+path = "ocx-contrib/mirror-elvish"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-elvish.answers]
+repo_name = "mirror-elvish"
+profile = "mirror"
+
+[repos.mirror-embarkstudios]
+repo = "ocx-contrib/mirror-embarkstudios"
+path = "ocx-contrib/mirror-embarkstudios"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-embarkstudios.answers]
+repo_name = "mirror-embarkstudios"
+profile = "mirror"
+
+[repos.mirror-evilmartians]
+repo = "ocx-contrib/mirror-evilmartians"
+path = "ocx-contrib/mirror-evilmartians"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-evilmartians.answers]
+repo_name = "mirror-evilmartians"
+profile = "mirror"
+
+[repos.mirror-fish-shell]
+repo = "ocx-contrib/mirror-fish-shell"
+path = "ocx-contrib/mirror-fish-shell"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-fish-shell.answers]
+repo_name = "mirror-fish-shell"
+profile = "mirror"
+
+[repos.mirror-fullstorydev]
+repo = "ocx-contrib/mirror-fullstorydev"
+path = "ocx-contrib/mirror-fullstorydev"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-fullstorydev.answers]
+repo_name = "mirror-fullstorydev"
+profile = "mirror"
+
+[repos.mirror-fx]
+repo = "ocx-contrib/mirror-fx"
+path = "ocx-contrib/mirror-fx"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-fx.answers]
+repo_name = "mirror-fx"
+profile = "mirror"
+
+[repos.mirror-fzf]
+repo = "ocx-contrib/mirror-fzf"
+path = "ocx-contrib/mirror-fzf"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-fzf.answers]
+repo_name = "mirror-fzf"
+profile = "mirror"
+
+[repos.mirror-getsops]
+repo = "ocx-contrib/mirror-getsops"
+path = "ocx-contrib/mirror-getsops"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-getsops.answers]
+repo_name = "mirror-getsops"
+profile = "mirror"
+
+[repos.mirror-git-cliff]
+repo = "ocx-contrib/mirror-git-cliff"
+path = "ocx-contrib/mirror-git-cliff"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-git-cliff.answers]
+repo_name = "mirror-git-cliff"
+profile = "mirror"
+
+[repos.mirror-github]
+repo = "ocx-contrib/mirror-github"
+path = "ocx-contrib/mirror-github"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-github.answers]
+repo_name = "mirror-github"
+profile = "mirror"
+
+[repos.mirror-gitlab]
+repo = "ocx-contrib/mirror-gitlab"
+path = "ocx-contrib/mirror-gitlab"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-gitlab.answers]
+repo_name = "mirror-gitlab"
+profile = "mirror"
+
+[repos.mirror-gitleaks]
+repo = "ocx-contrib/mirror-gitleaks"
+path = "ocx-contrib/mirror-gitleaks"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-gitleaks.answers]
+repo_name = "mirror-gitleaks"
+profile = "mirror"
+
+[repos.mirror-go-task]
+repo = "ocx-contrib/mirror-go-task"
+path = "ocx-contrib/mirror-go-task"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-go-task.answers]
+repo_name = "mirror-go-task"
+profile = "mirror"
+
+[repos.mirror-gohugoio]
+repo = "ocx-contrib/mirror-gohugoio"
+path = "ocx-contrib/mirror-gohugoio"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-gohugoio.answers]
+repo_name = "mirror-gohugoio"
+profile = "mirror"
+
+[repos.mirror-golang]
+repo = "ocx-contrib/mirror-golang"
+path = "ocx-contrib/mirror-golang"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-golang.answers]
+repo_name = "mirror-golang"
+profile = "mirror"
+
+[repos.mirror-google]
+repo = "ocx-contrib/mirror-google"
+path = "ocx-contrib/mirror-google"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-google.answers]
+repo_name = "mirror-google"
+profile = "mirror"
+
+[repos.mirror-goreleaser]
+repo = "ocx-contrib/mirror-goreleaser"
+path = "ocx-contrib/mirror-goreleaser"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-goreleaser.answers]
+repo_name = "mirror-goreleaser"
+profile = "mirror"
+
+[repos.mirror-gruntwork-io]
+repo = "ocx-contrib/mirror-gruntwork-io"
+path = "ocx-contrib/mirror-gruntwork-io"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-gruntwork-io.answers]
+repo_name = "mirror-gruntwork-io"
+profile = "mirror"
+
+[repos.mirror-hawkeye]
+repo = "ocx-contrib/mirror-hawkeye"
+path = "ocx-contrib/mirror-hawkeye"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-hawkeye.answers]
+repo_name = "mirror-hawkeye"
+profile = "mirror"
+
+[repos.mirror-helm]
+repo = "ocx-contrib/mirror-helm"
+path = "ocx-contrib/mirror-helm"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-helm.answers]
+repo_name = "mirror-helm"
+profile = "mirror"
+
+[repos.mirror-herdrdev]
+repo = "ocx-contrib/mirror-herdrdev"
+path = "ocx-contrib/mirror-herdrdev"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-herdrdev.answers]
+repo_name = "mirror-herdrdev"
+profile = "mirror"
+
+[repos.mirror-jdx]
+repo = "ocx-contrib/mirror-jdx"
+path = "ocx-contrib/mirror-jdx"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-jdx.answers]
+repo_name = "mirror-jdx"
+profile = "mirror"
+
+[repos.mirror-jfrog]
+repo = "ocx-contrib/mirror-jfrog"
+path = "ocx-contrib/mirror-jfrog"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-jfrog.answers]
+repo_name = "mirror-jfrog"
+profile = "mirror"
+
+[repos.mirror-jqlang]
+repo = "ocx-contrib/mirror-jqlang"
+path = "ocx-contrib/mirror-jqlang"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-jqlang.answers]
+repo_name = "mirror-jqlang"
+profile = "mirror"
+
+[repos.mirror-just]
+repo = "ocx-contrib/mirror-just"
+path = "ocx-contrib/mirror-just"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-just.answers]
+repo_name = "mirror-just"
+profile = "mirror"
+
+[repos.mirror-k9s]
+repo = "ocx-contrib/mirror-k9s"
+path = "ocx-contrib/mirror-k9s"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-k9s.answers]
+repo_name = "mirror-k9s"
+profile = "mirror"
+
+[repos.mirror-kitware]
+repo = "ocx-contrib/mirror-kitware"
+path = "ocx-contrib/mirror-kitware"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-kitware.answers]
+repo_name = "mirror-kitware"
+profile = "mirror"
+
+[repos.mirror-kubeconform]
+repo = "ocx-contrib/mirror-kubeconform"
+path = "ocx-contrib/mirror-kubeconform"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-kubeconform.answers]
+repo_name = "mirror-kubeconform"
+profile = "mirror"
+
+[repos.mirror-kubectx]
+repo = "ocx-contrib/mirror-kubectx"
+path = "ocx-contrib/mirror-kubectx"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-kubectx.answers]
+repo_name = "mirror-kubectx"
+profile = "mirror"
+
+[repos.mirror-kubernetes]
+repo = "ocx-contrib/mirror-kubernetes"
+path = "ocx-contrib/mirror-kubernetes"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-kubernetes.answers]
+repo_name = "mirror-kubernetes"
+profile = "mirror"
+
+[repos.mirror-kubernetes-sigs]
+repo = "ocx-contrib/mirror-kubernetes-sigs"
+path = "ocx-contrib/mirror-kubernetes-sigs"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-kubernetes-sigs.answers]
+repo_name = "mirror-kubernetes-sigs"
+profile = "mirror"
+
+[repos.mirror-lazygit]
+repo = "ocx-contrib/mirror-lazygit"
+path = "ocx-contrib/mirror-lazygit"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-lazygit.answers]
+repo_name = "mirror-lazygit"
+profile = "mirror"
+
+[repos.mirror-lsd-rs]
+repo = "ocx-contrib/mirror-lsd-rs"
+path = "ocx-contrib/mirror-lsd-rs"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-lsd-rs.answers]
+repo_name = "mirror-lsd-rs"
+profile = "mirror"
+
+[repos.mirror-lychee]
+repo = "ocx-contrib/mirror-lychee"
+path = "ocx-contrib/mirror-lychee"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-lychee.answers]
+repo_name = "mirror-lychee"
+profile = "mirror"
+
+[repos.mirror-miniserve]
+repo = "ocx-contrib/mirror-miniserve"
+path = "ocx-contrib/mirror-miniserve"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-miniserve.answers]
+repo_name = "mirror-miniserve"
+profile = "mirror"
+
+[repos.mirror-mozilla]
+repo = "ocx-contrib/mirror-mozilla"
+path = "ocx-contrib/mirror-mozilla"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-mozilla.answers]
+repo_name = "mirror-mozilla"
+profile = "mirror"
+
+[repos.mirror-neovim]
+repo = "ocx-contrib/mirror-neovim"
+path = "ocx-contrib/mirror-neovim"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-neovim.answers]
+repo_name = "mirror-neovim"
+profile = "mirror"
+
+[repos.mirror-nextest-rs]
+repo = "ocx-contrib/mirror-nextest-rs"
+path = "ocx-contrib/mirror-nextest-rs"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-nextest-rs.answers]
+repo_name = "mirror-nextest-rs"
+profile = "mirror"
+
+[repos.mirror-ninja-build]
+repo = "ocx-contrib/mirror-ninja-build"
+path = "ocx-contrib/mirror-ninja-build"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-ninja-build.answers]
+repo_name = "mirror-ninja-build"
+profile = "mirror"
+
+[repos.mirror-nodejs]
+repo = "ocx-contrib/mirror-nodejs"
+path = "ocx-contrib/mirror-nodejs"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-nodejs.answers]
+repo_name = "mirror-nodejs"
+profile = "mirror"
+
+[repos.mirror-nushell]
+repo = "ocx-contrib/mirror-nushell"
+path = "ocx-contrib/mirror-nushell"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-nushell.answers]
+repo_name = "mirror-nushell"
+profile = "mirror"
+
+[repos.mirror-opentofu]
+repo = "ocx-contrib/mirror-opentofu"
+path = "ocx-contrib/mirror-opentofu"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-opentofu.answers]
+repo_name = "mirror-opentofu"
+profile = "mirror"
+
+[repos.mirror-oras-project]
+repo = "ocx-contrib/mirror-oras-project"
+path = "ocx-contrib/mirror-oras-project"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-oras-project.answers]
+repo_name = "mirror-oras-project"
+profile = "mirror"
+
+[repos.mirror-oven-sh]
+repo = "ocx-contrib/mirror-oven-sh"
+path = "ocx-contrib/mirror-oven-sh"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-oven-sh.answers]
+repo_name = "mirror-oven-sh"
+profile = "mirror"
+
+[repos.mirror-oxc-project]
+repo = "ocx-contrib/mirror-oxc-project"
+path = "ocx-contrib/mirror-oxc-project"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-oxc-project.answers]
+repo_name = "mirror-oxc-project"
+profile = "mirror"
+
+[repos.mirror-pdm-project]
+repo = "ocx-contrib/mirror-pdm-project"
+path = "ocx-contrib/mirror-pdm-project"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-pdm-project.answers]
+repo_name = "mirror-pdm-project"
+profile = "mirror"
+
+[repos.mirror-pnpm]
+repo = "ocx-contrib/mirror-pnpm"
+path = "ocx-contrib/mirror-pnpm"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-pnpm.answers]
+repo_name = "mirror-pnpm"
+profile = "mirror"
+
+[repos.mirror-powershell]
+repo = "ocx-contrib/mirror-powershell"
+path = "ocx-contrib/mirror-powershell"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-powershell.answers]
+repo_name = "mirror-powershell"
+profile = "mirror"
+
+[repos.mirror-prek]
+repo = "ocx-contrib/mirror-prek"
+path = "ocx-contrib/mirror-prek"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-prek.answers]
+repo_name = "mirror-prek"
+profile = "mirror"
+
+[repos.mirror-project-zot]
+repo = "ocx-contrib/mirror-project-zot"
+path = "ocx-contrib/mirror-project-zot"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-project-zot.answers]
+repo_name = "mirror-project-zot"
+profile = "mirror"
+
+[repos.mirror-protocolbuffers]
+repo = "ocx-contrib/mirror-protocolbuffers"
+path = "ocx-contrib/mirror-protocolbuffers"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-protocolbuffers.answers]
+repo_name = "mirror-protocolbuffers"
+profile = "mirror"
+
+[repos.mirror-pulumi]
+repo = "ocx-contrib/mirror-pulumi"
+path = "ocx-contrib/mirror-pulumi"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-pulumi.answers]
+repo_name = "mirror-pulumi"
+profile = "mirror"
+
+[repos.mirror-regclient]
+repo = "ocx-contrib/mirror-regclient"
+path = "ocx-contrib/mirror-regclient"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-regclient.answers]
+repo_name = "mirror-regclient"
+profile = "mirror"
+
+[repos.mirror-reviewdog]
+repo = "ocx-contrib/mirror-reviewdog"
+path = "ocx-contrib/mirror-reviewdog"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-reviewdog.answers]
+repo_name = "mirror-reviewdog"
+profile = "mirror"
+
+[repos.mirror-ripgrep]
+repo = "ocx-contrib/mirror-ripgrep"
+path = "ocx-contrib/mirror-ripgrep"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-ripgrep.answers]
+repo_name = "mirror-ripgrep"
+profile = "mirror"
+
+[repos.mirror-rtk-ai]
+repo = "ocx-contrib/mirror-rtk-ai"
+path = "ocx-contrib/mirror-rtk-ai"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-rtk-ai.answers]
+repo_name = "mirror-rtk-ai"
+profile = "mirror"
+
+[repos.mirror-rust-lang]
+repo = "ocx-contrib/mirror-rust-lang"
+path = "ocx-contrib/mirror-rust-lang"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-rust-lang.answers]
+repo_name = "mirror-rust-lang"
+profile = "mirror"
+
+[repos.mirror-sharkdp]
+repo = "ocx-contrib/mirror-sharkdp"
+path = "ocx-contrib/mirror-sharkdp"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-sharkdp.answers]
+repo_name = "mirror-sharkdp"
+profile = "mirror"
+
+[repos.mirror-shellcheck]
+repo = "ocx-contrib/mirror-shellcheck"
+path = "ocx-contrib/mirror-shellcheck"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-shellcheck.answers]
+repo_name = "mirror-shellcheck"
+profile = "mirror"
+
+[repos.mirror-shfmt]
+repo = "ocx-contrib/mirror-shfmt"
+path = "ocx-contrib/mirror-shfmt"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-shfmt.answers]
+repo_name = "mirror-shfmt"
+profile = "mirror"
+
+[repos.mirror-shopify]
+repo = "ocx-contrib/mirror-shopify"
+path = "ocx-contrib/mirror-shopify"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-shopify.answers]
+repo_name = "mirror-shopify"
+profile = "mirror"
+
+[repos.mirror-sigstore]
+repo = "ocx-contrib/mirror-sigstore"
+path = "ocx-contrib/mirror-sigstore"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-sigstore.answers]
+repo_name = "mirror-sigstore"
+profile = "mirror"
+
+[repos.mirror-starship]
+repo = "ocx-contrib/mirror-starship"
+path = "ocx-contrib/mirror-starship"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-starship.answers]
+repo_name = "mirror-starship"
+profile = "mirror"
+
+[repos.mirror-stern]
+repo = "ocx-contrib/mirror-stern"
+path = "ocx-contrib/mirror-stern"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-stern.answers]
+repo_name = "mirror-stern"
+profile = "mirror"
+
+[repos.mirror-superfile]
+repo = "ocx-contrib/mirror-superfile"
+path = "ocx-contrib/mirror-superfile"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-superfile.answers]
+repo_name = "mirror-superfile"
+profile = "mirror"
+
+[repos.mirror-tailwindlabs]
+repo = "ocx-contrib/mirror-tailwindlabs"
+path = "ocx-contrib/mirror-tailwindlabs"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-tailwindlabs.answers]
+repo_name = "mirror-tailwindlabs"
+profile = "mirror"
+
+[repos.mirror-watchexec]
+repo = "ocx-contrib/mirror-watchexec"
+path = "ocx-contrib/mirror-watchexec"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-watchexec.answers]
+repo_name = "mirror-watchexec"
+profile = "mirror"
+
+[repos.mirror-yq]
+repo = "ocx-contrib/mirror-yq"
+path = "ocx-contrib/mirror-yq"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-yq.answers]
+repo_name = "mirror-yq"
+profile = "mirror"
+
+[repos.mirror-ziglang]
+repo = "ocx-contrib/mirror-ziglang"
+path = "ocx-contrib/mirror-ziglang"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-ziglang.answers]
+repo_name = "mirror-ziglang"
+profile = "mirror"
+
+[repos.mirror-zoxide]
+repo = "ocx-contrib/mirror-zoxide"
+path = "ocx-contrib/mirror-zoxide"
+iteration = 3
+adopted = false
+excluded = false
+
+[repos.mirror-zoxide.answers]
+repo_name = "mirror-zoxide"
+profile = "mirror"
