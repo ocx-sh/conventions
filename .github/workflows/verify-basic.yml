@@ -24,7 +24,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0 # `task secrets` (gitleaks git) scans the full history
-      - uses: ocx-sh/conventions/.github/actions/setup@5bc9207abe37bbbbffc07e48ab295eee4a383dbc # v0
+      - uses: ocx-sh/conventions/.github/actions/setup@bc40a05d41e369eddacd544e143c81d3319c1f53 # v0
         with:
           groups: default,lint
       - run: task ci:lint
@@ -44,14 +44,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ocx-sh/conventions/.github/actions/setup@5bc9207abe37bbbbffc07e48ab295eee4a383dbc # v0
+      - uses: ocx-sh/conventions/.github/actions/setup@bc40a05d41e369eddacd544e143c81d3319c1f53 # v0
         with:
           groups: default,test
           otel-auth: ${{ secrets.OTEL_OTLP_AUTH }}
       - run: task ci:test
       - name: Push JUnit telemetry
         if: always()
-        uses: ocx-sh/conventions/.github/actions/setup@5bc9207abe37bbbbffc07e48ab295eee4a383dbc # v0
+        uses: ocx-sh/conventions/.github/actions/setup@bc40a05d41e369eddacd544e143c81d3319c1f53 # v0
         with:
           report: target/reports/junit/*.xml
           otel-auth: ${{ secrets.OTEL_OTLP_AUTH }}

@@ -123,6 +123,9 @@ def test_c026_dogfood_answers_and_render_current(tmp_path):
     data = tmp_path / "answers.yml"
     data.write_text(yaml.safe_dump({k: v for k, v in root.items() if not k.startswith("_")}))
     dest = tmp_path / "re-render"
+    # CI checks out depth 1; the describe-style _commit needs the tags and history behind it.
+    if run(["git", "rev-parse", "--is-shallow-repository"], REPO_ROOT, git_env_dict()).stdout.strip() == "true":
+        run(["git", "fetch", "--unshallow", "--tags", "--quiet", "origin"], REPO_ROOT, git_env_dict())
     run(["uv", "run", "--project", REPO_ROOT, "copier", "copy", "--defaults", "--quiet", "--vcs-ref", str(root["_commit"]),
          "--data-file", data, REPO_ROOT, dest], REPO_ROOT, git_env_dict())
     a = want
