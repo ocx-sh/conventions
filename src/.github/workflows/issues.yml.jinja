@@ -20,9 +20,7 @@ jobs:
   ping:
     name: Discord ping
     if: {% raw %}>-
-      github.event_name == 'workflow_dispatch' ||
-      (!contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
-      !endsWith(github.actor, '[bot]')){% endraw %}
+      github.event_name == 'workflow_dispatch' || !endsWith(github.actor, '[bot]'){% endraw %}
 
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -45,8 +43,15 @@ jobs:
             echo "OCX_ISSUES_HOOK is empty; skipping"
             exit 0
           fi
+          # The webhook payload's author_association is unreliable at `opened` (a MEMBER arrived as CONTRIBUTOR), so the
+          # association is read back from the API instead.
+          gh api "repos/$REPO/issues/${INPUT_ISSUE:-$EVENT_NUMBER}" > issue.json
+          if [ -z "$INPUT_ISSUE" ]; then
+            case "$(jq -r .author_association issue.json)" in
+              OWNER|MEMBER|COLLABORATOR) echo "maintainer-authored; skipping"; exit 0 ;;
+            esac
+          fi
           if [ -n "$INPUT_ISSUE" ]; then
-            gh api "repos/$REPO/issues/$INPUT_ISSUE" > issue.json
             EVENT_NUMBER=$(jq -r .number issue.json)
             EVENT_TITLE=$(jq -r .title issue.json)
             EVENT_BODY=$(jq -r '.body // ""' issue.json)
