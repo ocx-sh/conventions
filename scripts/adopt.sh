@@ -77,3 +77,27 @@ while IFS= read -r p; do
   # ls-files matches the index case-sensitively: the renamed taskfile.yml is not mistaken for Taskfile.yml.
   [ -z "$p" ] || [ -z "$(git ls-files -- "$p")" ] || git rm -q -- "$p"
 done <<<"$paths"
+
+# ocx.toml is seeded-once, so a repo that already has one lacks the baseline tools and groups (task, lint, release).
+# Render a fresh copy and append what is missing; the repo's own pins (e.g. a mirror's `:0.6` toolchain) stay.
+# The caller then runs `ocx lock` (relock, never delete the lock) and `task setup`.
+if [ -f ocx.toml ] && git cat-file -e HEAD:ocx.toml 2>/dev/null; then
+  "${copier[@]}" copy --defaults --overwrite --skip-tasks --vcs-ref "$ref" --data-file "$tmp/data.json" "$src" "$tmp/render" >/dev/null 2>&1 || true
+  [ ! -f "$tmp/render/ocx.toml" ] || python3 - "$tmp/render/ocx.toml" ocx.toml <<'PY'
+import re, sys, tomllib
+want, have = (open(p).read() for p in sys.argv[1:3])
+w, h = tomllib.loads(want), tomllib.loads(have)
+def tools(d): return {("default", k): v for k, v in d.get("tools", {}).items()} | {(g, k): v for g, b in d.get("group", {}).items() for k, v in b.get("tools", {}).items()}
+wt, ht = tools(w), tools(h)
+out = have.rstrip("\n") + "\n"
+for (g, k), v in wt.items():
+    if (g, k) in ht: continue
+    line = f'{k} = "{v}"\n'
+    hdr = "[tools]" if g == "default" else f"[group.{g}.tools]"
+    if re.search(rf"^{re.escape(hdr)}\s*$", out, re.M):
+        out = re.sub(rf"^({re.escape(hdr)}\s*\n)", lambda m: m.group(1) + line, out, count=1, flags=re.M)
+    else:
+        out += f"\n{hdr}\n{line}"
+open(sys.argv[2], "w").write(out)
+PY
+fi
