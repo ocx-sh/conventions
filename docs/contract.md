@@ -118,6 +118,12 @@ the next green scheduled run closes it. With `repo_workflows` a `repo` job (same
 `./.github/workflows/deep-repo.yml` with the same secret mapping, and `nightly-red` waits for it: a red `repo`
 job reddens the night, a cancelled one leaves the issue as it is.
 
+A caller (`uses: ./.github/workflows/verify-deep.yml`) passes secrets by name, never `secrets: inherit`. `on.workflow_call.secrets`
+declares, all `required: false`, every secret the file reads: `OTEL_OTLP_AUTH`, the cache secret of the mode
+(`BAZEL_CACHE_READ_AUTH` for a Bazel repo, `BAZEL_CACHE_WRITE_AUTH` with `bazel_cache_write = trusted`, none without
+`bazel`) and each `repo_workflows.secrets` entry. The block is the whole `secrets` object, so a secret the file reads but
+does not declare would arrive empty in a called run.
+
 **`basic-repo.yml`, `deep-repo.yml`** (seeded once, only with `repo_workflows`) — `workflow_call` stubs the repo owns
 from the first render: top-level `permissions: {}`, one trivial job, and every listed secret declared under
 `on.workflow_call.secrets` (`required: false`, so a fork PR that receives no secrets still calls them). A called workflow

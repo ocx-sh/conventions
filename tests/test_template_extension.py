@@ -138,7 +138,7 @@ def test_c029_trusted_write_secret_carries_no_event_predicate(tmp_path):
     repo = render_to(answers_file(tmp_path, "full-bazel-site", bazel_cache_write="trusted"), tmp_path / "out")
     for wf in ("verify-basic.yml", "verify-deep.yml", "claude.yml"):
         text = (repo / ".github" / "workflows" / wf).read_text()
-        for line in (ln for ln in text.splitlines() if "BAZEL_CACHE_WRITE_AUTH" in ln):
+        for line in (ln for ln in text.splitlines() if "secrets.BAZEL_CACHE_WRITE_AUTH" in ln):
             assert line.strip().endswith(WRITE_SECRET) and "github." not in line, f"C-029 {wf}: bare secret expected, got {line.strip()!r}"
 
 
@@ -277,3 +277,43 @@ def test_c031_without_the_hook_the_conventional_check_stands(tmp_path):
     ocx_lock_committed(repo)
     assert judge(repo, tmp_path, "Checkpoint").returncode == 1, "C-031 no repo hook: a non-conventional subject still fails"
     assert judge(repo, tmp_path, "fix(x): y").returncode == 0, "C-031 no repo hook: a conventional subject still passes"
+
+
+# ---------------------------------------------------------------- C-032 verify-deep as a called workflow
+
+READ = re.compile(r"secrets\.([A-Za-z_][A-Za-z0-9_]*)")
+
+
+def called_secrets(repo):
+    on = yaml.safe_load((repo / ".github" / "workflows" / "verify-deep.yml").read_text())
+    trig = on.get("on", on.get(True))  # PyYAML reads a bare `on` key as True
+    return trig["workflow_call"]["secrets"]
+
+
+@pytest.mark.parametrize("base,override,expected", [
+    ("full-bazel-site", {"bazel_cache_write": "trusted", "repo_workflows": {"secrets": ["BAZEL_CACHE_WRITE_AUTH"]}},
+     {"OTEL_OTLP_AUTH", "BAZEL_CACHE_WRITE_AUTH"}),
+    ("full-bazel-site", {}, {"OTEL_OTLP_AUTH", "BAZEL_CACHE_READ_AUTH"}),
+    ("full-bazel-site", {"repo_workflows": {"secrets": ["DEPLOY_KEY", "OTEL_OTLP_AUTH"]}},
+     {"OTEL_OTLP_AUTH", "BAZEL_CACHE_READ_AUTH", "DEPLOY_KEY"}),
+    ("full-minimal", {}, {"OTEL_OTLP_AUTH"}),
+])
+def test_c032_workflow_call_declares_exactly_the_secrets_the_file_reads(tmp_path, base, override, expected):
+    repo = render_to(answers_file(tmp_path, base, **override), tmp_path / "out")
+    declared = called_secrets(repo)
+    assert set(declared) == expected, f"C-032 workflow_call.secrets must be the secrets verify-deep reads: {sorted(declared)}"
+    assert all(v == {"required": False} for v in declared.values()), f"C-032 every declared secret is optional (fork PRs carry none): {declared}"
+
+
+@pytest.mark.parametrize("base,override", [
+    ("full-bazel-site", {}),
+    ("full-bazel-site", {"bazel_cache_write": "trusted", "repo_workflows": {"secrets": ["BAZEL_CACHE_WRITE_AUTH", "X_TOKEN"]}}),
+    ("full-minimal", {}),
+    ("full-ocx", {}),
+])
+def test_c032_every_secret_verify_deep_reads_is_declared(tmp_path, base, override):
+    repo = render_to(answers_file(tmp_path, base, **override), tmp_path / "out")
+    text = (repo / ".github" / "workflows" / "verify-deep.yml").read_text()
+    read = set(READ.findall(text))
+    assert read <= set(called_secrets(repo)), \
+        f"C-032 verify-deep reads secrets its workflow_call does not declare (they arrive empty in a called run): {sorted(read - set(called_secrets(repo)))}"
