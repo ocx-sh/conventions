@@ -552,7 +552,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-caddyserver"
 path = "ocx-contrib/mirror-caddyserver"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-caddyserver.answers]
@@ -629,7 +629,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-denoland"
 path = "ocx-contrib/mirror-denoland"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-denoland.answers]
@@ -761,7 +761,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-fullstorydev"
 path = "ocx-contrib/mirror-fullstorydev"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-fullstorydev.answers]
@@ -827,7 +827,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-gitlab"
 path = "ocx-contrib/mirror-gitlab"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-gitlab.answers]
@@ -1201,7 +1201,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-oxc-project"
 path = "ocx-contrib/mirror-oxc-project"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-oxc-project.answers]
@@ -1267,7 +1267,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-protocolbuffers"
 path = "ocx-contrib/mirror-protocolbuffers"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-protocolbuffers.answers]
@@ -1432,7 +1432,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-tailwindlabs"
 path = "ocx-contrib/mirror-tailwindlabs"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-tailwindlabs.answers]
