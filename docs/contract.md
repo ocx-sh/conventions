@@ -108,7 +108,9 @@ and runs without the secrets stay green. (The `renovate` and `ocx.sh` environmen
 With `bazel_cache_write = trusted`, `lint`, `test`, `build`, `docs` and the deep matrix instead call the setup action
 with `bazel-cache: trusted` and `cache-write-auth: ${{ secrets.BAZEL_CACHE_WRITE_AUTH }}`, no event predicate and no read
 credential (one credential per lane). The answer is the repo's statement that those jobs run no untrusted code with the
-secret; a fork PR still carries no secret, so it reads uncached.
+secret; a fork PR still carries no secret, so it reads uncached. Each such job ends with an `if: always()` step that removes
+`$RUNNER_TEMP/bazel-cache-helper` and `$RUNNER_TEMP/bazel-cache.rc` (a composite action has no `post:` hook, and a self-hosted
+runner keeps `$RUNNER_TEMP` between jobs).
 
 Every checkout in `verify-basic.yml` and `verify-deep.yml` uses `persist-credentials: false` and `submodules: recursive` (a no-op
 without a `.gitmodules`); a repo that vendors submodules (ocx, grimoire, ocx-mirror) builds nothing without them.

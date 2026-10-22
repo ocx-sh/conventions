@@ -68,6 +68,13 @@ jobs:
           name: junit-{% raw %}${{ matrix.os }}{% endraw %}
           path: target/reports/junit
           if-no-files-found: ignore
+{%- if trusted %}
+      # The helper script holds the credential; a self-hosted runner keeps $RUNNER_TEMP between jobs.
+      - name: Remove the Bazel cache credential
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/bazel-cache-helper" "$RUNNER_TEMP/bazel-cache.rc"
+{%- endif %}
 {%- if has_repo %}
 
   # Repo-owned deep jobs: .github/workflows/deep-repo.yml is seeded once and belongs to the repo from then on.

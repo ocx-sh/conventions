@@ -47,6 +47,13 @@ jobs:
       - run: |
           # actionlint + zizmor, both pinned in taskfiles/baseline.taskfile.yml
           task workflows:lint
+{%- if trusted %}
+      # The helper script holds the credential; a self-hosted runner keeps $RUNNER_TEMP between jobs.
+      - name: Remove the Bazel cache credential
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/bazel-cache-helper" "$RUNNER_TEMP/bazel-cache.rc"
+{%- endif %}
 {%- if full %}
 
   test:
@@ -82,6 +89,13 @@ jobs:
           require_tests: false
           # Fork PR tokens cannot write checks: annotate only.
           annotate_only: {% raw %}${{ github.event.pull_request.head.repo.fork == true }}{% endraw %}
+{%- if trusted %}
+      # The helper script holds the credential; a self-hosted runner keeps $RUNNER_TEMP between jobs.
+      - name: Remove the Bazel cache credential
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/bazel-cache-helper" "$RUNNER_TEMP/bazel-cache.rc"
+{%- endif %}
 {%- endif %}
 {%- if has_bazel %}
 
@@ -110,6 +124,13 @@ jobs:
 {%- endif %}
           otel-auth: {% raw %}${{ secrets.OTEL_OTLP_AUTH }}{% endraw %}
       - run: task ci:build
+{%- if trusted %}
+      # The helper script holds the credential; a self-hosted runner keeps $RUNNER_TEMP between jobs.
+      - name: Remove the Bazel cache credential
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/bazel-cache-helper" "$RUNNER_TEMP/bazel-cache.rc"
+{%- endif %}
 {%- endif %}
 {%- if has_site %}
 
@@ -139,6 +160,13 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
           overwrite: true # a job rerun uploads the same name again; without it the step 409s and fails the job
+{%- if trusted %}
+      # The helper script holds the credential; a self-hosted runner keeps $RUNNER_TEMP between jobs.
+      - name: Remove the Bazel cache credential
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/bazel-cache-helper" "$RUNNER_TEMP/bazel-cache.rc"
+{%- endif %}
 {%- endif %}
 {%- if has_repo %}
 

@@ -334,3 +334,42 @@ def test_c033_every_verify_checkout_fetches_submodules_recursively(tmp_path, bas
                         f"C-033 {wf} job {jname}: a repo that vendors submodules (ocx, grimoire) builds nothing without them: {s.get('with')}"
                     assert (s.get("with") or {}).get("persist-credentials") is False, f"C-033 {wf} job {jname} still drops the token"
     assert seen >= 3, f"C-033 expected the lint, test and deep checkouts at least: saw {seen}"
+
+
+# ---------------------------------------------------------------- C-034 trusted cache credential cleanup
+
+def trusted_jobs(repo):
+    out = []
+    for wf in ("verify-basic.yml", "verify-deep.yml"):
+        for jname, job in jobs(repo, wf).items():
+            steps = job.get("steps", [])
+            if any((s.get("with") or {}).get("bazel-cache") == "trusted" for s in steps):
+                out.append((wf, jname, steps))
+    return out
+
+
+def test_c034_every_trusted_job_ends_by_removing_the_credential_it_wrote(tmp_path):
+    repo = render_to(answers_file(tmp_path, "full-bazel-site", bazel_cache_write="trusted"), tmp_path / "out")
+    found = trusted_jobs(repo)
+    assert {(w, j) for w, j, _ in found} == {("verify-basic.yml", n) for n in ("lint", "test", "build", "docs")} | {("verify-deep.yml", "deep")}, \
+        f"C-034 the trusted jobs found: {[(w, j) for w, j, _ in found]}"
+    for wf, jname, steps in found:
+        last = steps[-1]
+        assert last.get("if") == "always()" and last.get("shell") == "bash", f"C-034 {wf} {jname}: the last step must be an always() bash cleanup: {last}"
+        rt = tmp_path / f"rt-{wf}-{jname}"
+        rt.mkdir()
+        (rt / "bazel-cache-helper").write_text("secret")
+        (rt / "bazel-cache.rc").write_text("rc")
+        (rt / "other.txt").write_text("keep")
+        r = subprocess.run(["bash", "-e", "-c", last["run"]], env={"RUNNER_TEMP": str(rt), "PATH": "/usr/bin:/bin"}, capture_output=True, text=True, timeout=30)
+        assert r.returncode == 0, f"C-034 {wf} {jname}: cleanup must succeed: {r.stderr}"
+        assert sorted(p.name for p in rt.iterdir()) == ["other.txt"], f"C-034 {wf} {jname}: cleanup removes the helper and the rc, nothing else"
+        r = subprocess.run(["bash", "-e", "-c", last["run"]], env={"RUNNER_TEMP": str(rt), "PATH": "/usr/bin:/bin"}, capture_output=True, text=True, timeout=30)
+        assert r.returncode == 0, f"C-034 {wf} {jname}: cleanup is a no-op when the step that writes the credential was skipped (Windows, fork PR): {r.stderr}"
+
+
+@pytest.mark.parametrize("answers", [{}, {"bazel_cache_write": "main"}])
+def test_c034_no_cleanup_step_outside_trusted_mode(tmp_path, answers):
+    repo = render_to(answers_file(tmp_path, "full-bazel-site", **answers), tmp_path / "out")
+    for wf in ("verify-basic.yml", "verify-deep.yml"):
+        assert "bazel-cache-helper" not in (repo / ".github" / "workflows" / wf).read_text(), f"C-034 {wf}: mode main writes no helper, so it removes none"
