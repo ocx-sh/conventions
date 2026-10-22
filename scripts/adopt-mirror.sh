@@ -26,14 +26,15 @@ cd "$dest"
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "adopt-mirror: $dest is not a git repository" >&2; exit 1; }
 [ -z "$(git status --porcelain)" ] || { echo "adopt-mirror: $key: working tree is dirty" >&2; exit 1; }
 [ "$(git branch --show-current)" = main ] || { echo "adopt-mirror: $key: not on main" >&2; exit 1; }
-git pull -q --ff-only || { echo "adopt-mirror: $key: git pull --ff-only failed" >&2; exit 1; }
+git pull -q --ff-only origin main || { echo "adopt-mirror: $key: git pull --ff-only failed" >&2; exit 1; }
 [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || { echo "adopt-mirror: $key: main is ahead of origin/main" >&2; exit 1; }
 [ ! -f .copier-answers.yml ] || { echo "adopt-mirror: $key: already adopted; nothing to do"; exit 0; }
 orig=$(git rev-parse HEAD)
 repo=$(git remote get-url origin | sed -E 's#.*github\.com[:/]##; s#\.git$##')
 specs=(*/mirror.yml)
 [ -e "${specs[0]}" ] || fail "no */mirror.yml spec found"
-spec_args=(); for s in "${specs[@]}"; do spec_args+=(--spec "$s"); done
+# allow_manual_edits specs carry a deliberately hand-edited workflow, so --check always drifts on them
+spec_args=(); for s in "${specs[@]}"; do grep -qx 'allow_manual_edits: true' "$s" || spec_args+=(--spec "$s"); done
 
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 cp ocx.lock "$tmp/ocx.lock.orig" || fail "no ocx.lock"
@@ -65,7 +66,7 @@ git add -A  # grim:check reads untracked client files as drift; staged is fine
 for g in lock:check baseline:check secrets workflows:lint; do
   ocx exec -- task "$g" >"$tmp/gate.log" 2>&1 || fail "gate $g failed: $(tail -n1 "$tmp/gate.log")"
 done
-ocx exec -- ocx-mirror package pipeline generate ci --check "${spec_args[@]}" >"$tmp/gen.log" 2>&1 \
+[ ${#spec_args[@]} -eq 0 ] || ocx exec -- ocx-mirror package pipeline generate ci --check "${spec_args[@]}" >"$tmp/gen.log" 2>&1 \
   || fail "generate ci --check drifts: $(tail -n1 "$tmp/gen.log")"
 
 ref=$(sed -n 's/^_commit: *//p' .copier-answers.yml)

@@ -9,4 +9,9 @@ description = "Repo-local allowlist for gitleaks false positives"
 # The Discord user id in ocx-mirror-generated workflows is a ping target, not a credential.
 regexTarget = "line"
 regexes = ['''OCX_MIRROR_DISCORD_USER_ID: "\d+"''']
+{%- if profile == 'mirror' %}
+# Smoke tests feed fake keys to secret-handling tools, and specs carry no credentials (those are org secrets).
+paths = ['''^([^/]+/)?tests/smoke\.star$''', '''^([^/]+/)?mirror\.yml$''']
+{%- else %}
 paths = []
+{%- endif %}

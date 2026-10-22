@@ -376,6 +376,11 @@ def test_c008_gitleaks_config(rendered, name):
     cfg = load_toml("C-008", rendered(name), ".gitleaks.toml")
     assert (cfg.get("extend") or {}).get("useDefault") is True, "C-008: .gitleaks.toml needs [extend] useDefault = true"
     assert isinstance(cfg.get("allowlist"), dict), "C-008: .gitleaks.toml needs an [allowlist] table"
+    paths = cfg["allowlist"].get("paths", [])
+    if name.startswith("mirror"):
+        assert any("smoke" in p for p in paths), "C-008: mirror profile must allowlist tests/smoke.star fixtures"
+    else:
+        assert paths == [], "C-008: full profile seeds no path allowlist"
 
 
 # ---------------------------------------------------------------- workflows (C-009 C-010 C-013 C-014, D-02)
