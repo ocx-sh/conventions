@@ -631,7 +631,7 @@ def test_c040_issues_workflow(rendered, name):
     job = wf["jobs"]["ping"]
     cond = job["if"]
     assert "!endsWith(github.actor, '[bot]')" in cond, "C-040: ping job must skip bots"
-    assert "OWNER|MEMBER|COLLABORATOR" in job_runs(job), "C-040: must skip maintainer authors, read from the API (payload association is unreliable)"
+    assert "admin|maintain|write" in job_runs(job), "C-040: must skip maintainer authors, read from the API (payload association is unreliable)"
     assert "227748867204972545" in raw and "allowed_mentions" in raw, "C-040: payload must mention the maintainer and restrict allowed_mentions"
     assert "secrets.OCX_ISSUES_HOOK" in raw, "C-040: must read secrets.OCX_ISSUES_HOOK"
     assert "environment" not in job, "C-040: ping job must not use an environment"

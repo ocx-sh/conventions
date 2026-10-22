@@ -44,12 +44,13 @@ jobs:
             echo "OCX_ISSUES_HOOK is empty; skipping"
             exit 0
           fi
-          # The webhook payload's author_association is unreliable at `opened` (a MEMBER arrived as CONTRIBUTOR), so the
-          # association is read back from the API instead.
+          # author_association is unreliable here: the webhook payload and the job token both report the owner as
+          # CONTRIBUTOR. Repo permission is exact (404 = no access = outsider), so a write-level author is a maintainer.
           gh api "repos/$REPO/issues/${INPUT_ISSUE:-$EVENT_NUMBER}" > issue.json
           if [ -z "$INPUT_ISSUE" ]; then
-            case "$(jq -r .author_association issue.json)" in
-              OWNER|MEMBER|COLLABORATOR) echo "maintainer-authored; skipping"; exit 0 ;;
+            perm=$(gh api "repos/$REPO/collaborators/$EVENT_AUTHOR/permission" --jq .permission 2>/dev/null || true)
+            case "$perm" in
+              admin|maintain|write) echo "maintainer-authored; skipping"; exit 0 ;;
             esac
           fi
           if [ -n "$INPUT_ISSUE" ]; then
