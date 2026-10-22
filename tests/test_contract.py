@@ -698,7 +698,8 @@ def test_d02_setup_action_pinned_to_template_commit(rendered, name):
     for fname, sha in found:
         assert re.fullmatch(SHA, sha), f"D-02: {fname} setup pin {sha!r} is not a 40-hex SHA"
         if dirty:
-            assert sha.startswith(commit), f"D-02: {fname} setup pin {sha} does not match recorded _commit {commit}"
+            # with tags present copier records a describe string (v0.1.1-13-gb5604fc); the hash is its -g suffix
+            assert sha.startswith(commit.rsplit("-g", 1)[-1]), f"D-02: {fname} setup pin {sha} does not match recorded _commit {commit}"
         else:
             assert sha == head, f"D-02: {fname} setup pin {sha} != template HEAD {head}"
 
