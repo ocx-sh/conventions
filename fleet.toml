@@ -453,7 +453,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-aquasecurity"
 path = "ocx-contrib/mirror-aquasecurity"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-aquasecurity.answers]
@@ -651,7 +651,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-direnv"
 path = "ocx-contrib/mirror-direnv"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-direnv.answers]
@@ -794,7 +794,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-getsops"
 path = "ocx-contrib/mirror-getsops"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-getsops.answers]
@@ -838,7 +838,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-gitleaks"
 path = "ocx-contrib/mirror-gitleaks"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-gitleaks.answers]
@@ -948,7 +948,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-jdx"
 path = "ocx-contrib/mirror-jdx"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-jdx.answers]
@@ -1036,7 +1036,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-kubernetes"
 path = "ocx-contrib/mirror-kubernetes"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-kubernetes.answers]
@@ -1168,7 +1168,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-opentofu"
 path = "ocx-contrib/mirror-opentofu"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-opentofu.answers]
@@ -1377,7 +1377,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-shopify"
 path = "ocx-contrib/mirror-shopify"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-shopify.answers]
