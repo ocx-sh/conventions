@@ -706,7 +706,7 @@ profile = "mirror"
 repo = "ocx-contrib/mirror-dust"
 path = "ocx-contrib/mirror-dust"
 iteration = 3
-adopted = false
+adopted = true
 excluded = false
 
 [repos.mirror-dust.answers]
