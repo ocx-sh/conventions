@@ -33,6 +33,19 @@ profile:
     - mirror
   default: full
 
+maintainers:
+  type: yaml
+  help: GitHub logins assigned to issues filed through the issue form
+  default: ["michael-herwig"]
+  validator: >-
+    {%- if maintainers is string or maintainers is not iterable or maintainers is mapping or not maintainers -%}
+    maintainers must be a non-empty list of GitHub logins.
+    {%- else -%}
+    {%- for m in maintainers if m is not string or not m -%}
+    maintainers must be a non-empty list of GitHub logins.{{ ' ' }}
+    {%- endfor -%}
+    {%- endif -%}
+
 bazel:
   type: bool
   help: Does the repo build with Bazel (adds bazel/baseline.bazelrc, .bazelrc, MODULE.bazel, build job)?

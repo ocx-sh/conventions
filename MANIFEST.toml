@@ -84,6 +84,21 @@ class = "template-owned"
 profiles = ["full"]
 
 [[file]]
+path = ".github/ISSUE_TEMPLATE/config.yml"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".github/ISSUE_TEMPLATE/report.yml"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
+path = ".github/workflows/issues.yml"
+class = "template-owned"
+profiles = ["full", "mirror"]
+
+[[file]]
 path = ".github/workflows/deploy-site.yml"
 class = "template-owned"
 profiles = ["full"]

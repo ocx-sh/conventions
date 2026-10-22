@@ -524,6 +524,47 @@ def test_c013_responder_is_least_privilege(rendered):
     assert "id-token" not in job["permissions"], "C-013: responder with an explicit token needs no id-token: write"
 
 
+@pytest.mark.parametrize("name", ALL)
+def test_c040_issue_form(rendered, name):
+    repo = rendered(name)
+    cfg = load_yaml("C-040", repo, ".github/ISSUE_TEMPLATE/config.yml")
+    assert cfg.get("blank_issues_enabled") is False, "C-040: config.yml must disable blank issues"
+    form = load_yaml("C-040", repo, ".github/ISSUE_TEMPLATE/report.yml")
+    want = answers(name).get("maintainers", ["michael-herwig"])
+    assert form.get("assignees") == want, f"C-040: form assignees {form.get('assignees')} != maintainers {want}"
+    assert "labels" not in form, "C-040: form must not set labels"
+    fields = {b["id"]: b for b in form["body"]}
+    if answers(name)["profile"] == "mirror":
+        assert {"package", "version", "platform", "what-happened"} <= set(fields), f"C-040: mirror form fields {sorted(fields)}"
+        assert fields["platform"]["type"] == "dropdown", "C-040: mirror form needs a platform dropdown"
+    else:
+        assert {"summary", "steps", "expected", "actual"} <= set(fields), f"C-040: full form fields {sorted(fields)}"
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_c040_issues_workflow(rendered, name):
+    raw = need("C-040", rendered(name), ".github/workflows/issues.yml").read_text()
+    wf = yaml.safe_load(raw)
+    trig = triggers(wf)
+    assert trig["issues"].get("types") == ["opened"], "C-040: issues trigger must be types [opened]"
+    assert "issue" in trig["workflow_dispatch"]["inputs"], "C-040: workflow_dispatch needs the `issue` input"
+    assert wf["permissions"] == {}, "C-040: top-level permissions must be {}"
+    job = wf["jobs"]["ping"]
+    cond = job["if"]
+    assert "OWNER" in cond and "MEMBER" in cond and "COLLABORATOR" in cond and "!endsWith(github.actor, '[bot]')" in cond, \
+        "C-040: ping job must skip OWNER/MEMBER/COLLABORATOR authors and bots"
+    assert "227748867204972545" in raw and "allowed_mentions" in raw, "C-040: payload must mention the maintainer and restrict allowed_mentions"
+    assert "secrets.OCX_ISSUES_HOOK" in raw, "C-040: must read secrets.OCX_ISSUES_HOOK"
+    assert "environment" not in job, "C-040: ping job must not use an environment"
+    run_text = job_runs(job)
+    assert "${{" not in run_text, "C-040: event text must reach `run:` only through env vars, never ${{ }} interpolation"
+
+
+def test_c040_empty_maintainers_rejected(render):
+    with pytest.raises(subprocess.CalledProcessError):
+        render("full-minimal", extra_data={"maintainers": "[]"})
+
+
 def test_c009_bazel_write_credential_only_on_push_to_main(rendered):
     repo = rendered("full-bazel-site")
     push_main = "github.event_name == 'push' && github.ref == 'refs/heads/main'"

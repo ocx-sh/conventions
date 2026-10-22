@@ -9,7 +9,8 @@ template-owned file: change `ocx-sh/conventions` and run `task copier:update`.
 | Answer | Type | Notes |
 |---|---|---|
 | `repo_name` | str | required |
-| `profile` | `full` \| `mirror` | `mirror` ignores every answer below |
+| `profile` | `full` \| `mirror` | `mirror` ignores every answer below except `maintainers` |
+| `maintainers` | list of GitHub logins, default `[michael-herwig]` | both profiles; assignees of the issue form |
 | `bazel` | bool, default false | full only |
 | `languages` | multiselect: bazel, cmake, dotnet, go, jvm, nix, python, rust, shell, swift, typescript | full only; unknown entry fails naming the allowed list |
 | `site` | null or `{dir, dist, deploy: bool, path?}` | full only; `path` optional, may be empty |

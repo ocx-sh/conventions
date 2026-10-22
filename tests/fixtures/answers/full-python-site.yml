@@ -9,3 +9,4 @@ site:
 languages: [python, typescript]
 deep_os: [ubuntu-latest, macos-latest, windows-latest]
 theme_bundle: true
+maintainers: [michael-herwig, ocx-bot]
