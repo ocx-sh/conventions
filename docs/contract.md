@@ -96,10 +96,16 @@ Matrix over `deep_os`, runs `task ci:deep` (Bazel repos: `--config=ci` plus `tes
 scheduled run opens or updates one issue labelled `nightly-red` (`issues: write` on that job only);
 the next green scheduled run closes it.
 
-**`claude.yml`** (full) — PR review on `pull_request` (opened, synchronize, ready_for_review) plus an
+**`claude.yml`** (full, mirror) — PR review on `pull_request` (opened, synchronize, ready_for_review) plus an
 `@claude` responder; secret `CLAUDE_CODE_OAUTH_TOKEN`. Every job skips (green) when the secret is
 empty or the PR is from a fork. The responder passes `github_token: ${{ github.token }}` (no OIDC exchange for the
 write-capable Claude App token) and an explicit `--allowedTools` allowlist (`gh pr view|diff|comment`, inline comment).
+Issue comments (not PRs) go to a separate `issue` job: OWNER/MEMBER/COLLABORATOR only, a deterministic pre-check
+declines issues with hidden content (HTML comments, `<details>`, invisible Unicode, base64 blobs; `@claude override`
+skips), then Claude analyses by default and, on `@claude implement`, commits to a `claude/` branch through the action's
+API commit tools (no shell `git`, no `gh pr create`; the maintainer opens the PR). Required per-repo ruleset on the
+default branch, applied at rollout: `pull_request` (0 approvals), `non_fast_forward`, required check `basic-gate`,
+bypass `OrganizationAdmin` only, so the job token can never land on `main` except through a green PR.
 
 **`deploy-site.yml`** (when `site.deploy`) — triggers `push: main` (site paths) and `workflow_dispatch`
 only, environment `ocx.sh`, uses the pinned `ocx-sh/website/.github/actions/deploy` with inputs

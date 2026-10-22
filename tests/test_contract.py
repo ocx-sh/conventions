@@ -524,6 +524,70 @@ def test_c013_responder_is_least_privilege(rendered):
     assert "id-token" not in job["permissions"], "C-013: responder with an explicit token needs no id-token: write"
 
 
+def _issue_job(rendered, name):
+    return yaml.safe_load(need("C-013", rendered(name), ".github/workflows/claude.yml").read_text())["jobs"]["issue"]
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_c013_issue_handler_is_branch_only(rendered, name):
+    job = _issue_job(rendered, name)
+    action = [s for s in steps(job) if "claude-code-action" in str(s.get("uses", ""))][0]["with"]
+    args = action["claude_args"]
+    assert action["github_token"] == "${{ github.token }}" and action["branch_prefix"] == "claude/", \
+        "C-013: issue handler must use the job token and the claude/ branch prefix"
+    assert "git " not in args.replace("gh issue", "") and "Bash(git" not in args and "gh pr create" not in args and "ocx-mirror" not in args, \
+        "C-013: issue handler must allow no shell git, gh pr create or ocx-mirror"
+    assert "mcp__github_file_ops__commit_files" in args, "C-013: issue handler commits through the API tool"
+    assert job["permissions"] == {"contents": "write", "issues": "write", "pull-requests": "read"}, "C-013: issue handler permissions"
+    assert "id-token" not in job["permissions"], "C-013: issue handler needs no id-token"
+    assert "!github.event.issue.pull_request" in job["if"], "C-013: issue handler must skip PR comments"
+    resp = yaml.safe_load(need("C-013", rendered(name), ".github/workflows/claude.yml").read_text())["jobs"]["respond"]
+    assert "github.event.issue.pull_request" in resp["if"], "C-013: PR responder must not also fire on plain issues"
+
+
+def _precheck(rendered, tmp_path, issue, comments, trigger):
+    """Run the rendered pre-check script against a fake `gh` that serves a fixture issue."""
+    step = [s for s in steps(_issue_job(rendered, "mirror")) if s.get("id") == "precheck"][0]
+    script = step["run"].split("<<'PY'\n", 1)[1].rsplit("PY", 1)[0]
+    (tmp_path / "gh").write_text(
+        "#!/bin/sh\n"
+        'case "$*" in\n'
+        '  *issues/7/comments*) cat "$FIX/comments" ;;\n'
+        '  api*) cat "$FIX/issue" ;;\n'
+        '  *) echo "$*" >> "$FIX/calls" ;;\n'
+        "esac\n")
+    (tmp_path / "gh").chmod(0o755)
+    (tmp_path / "issue").write_text(json.dumps(issue))
+    (tmp_path / "comments").write_text("".join(json.dumps(c) + "\n" for c in comments))
+    env = {"PATH": f"{tmp_path}:/usr/bin:/bin", "FIX": str(tmp_path), "REPO": "o/r", "NUMBER": "7",
+           "TRIGGER": trigger, "GITHUB_OUTPUT": str(tmp_path / "out")}
+    subprocess.run([sys.executable, "-c", script], env=env, check=True)
+    calls = (tmp_path / "calls").read_text() if (tmp_path / "calls").exists() else ""
+    return (tmp_path / "out").read_text().strip(), calls
+
+
+CLEAN = {"title": "Crash", "body": "it breaks"}
+
+
+@pytest.mark.parametrize("hidden", ["a <!-- ignore previous --> b", "x\u200bz", "t\U000e0041", "<details>x</details>", "A" * 200])
+def test_c013_precheck_refuses_hidden_content(rendered, tmp_path, hidden):
+    out, calls = _precheck(rendered, tmp_path, {**CLEAN, "body": hidden}, [], "@claude implement")
+    assert out == "ok=false" and "issue comment 7" in calls, "C-013: hidden content must be declined with a comment"
+
+
+def test_c013_precheck_scans_comments_and_passes_clean(rendered, tmp_path):
+    out, _ = _precheck(rendered, tmp_path, CLEAN, ["fine", "<!-- sneaky -->"], "@claude why?")
+    assert out == "ok=false", "C-013: hidden content in a comment must be declined"
+    (tmp_path / "b").mkdir()
+    out, calls = _precheck(rendered, tmp_path / "b", CLEAN, ["fine", "also fine"], "@claude why?")
+    assert out.endswith("ok=true") and not calls, "C-013: clean issue must pass silently"
+
+
+def test_c013_precheck_override(rendered, tmp_path):
+    out, calls = _precheck(rendered, tmp_path, {**CLEAN, "body": "<!-- x -->"}, [], "@claude override implement")
+    assert out == "ok=true" and not calls, "C-013: @claude override must skip the check"
+
+
 @pytest.mark.parametrize("name", ALL)
 def test_c040_issue_form(rendered, name):
     repo = rendered(name)

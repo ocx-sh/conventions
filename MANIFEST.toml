@@ -81,7 +81,7 @@ profiles = ["full"]
 [[file]]
 path = ".github/workflows/claude.yml"
 class = "template-owned"
-profiles = ["full"]
+profiles = ["full", "mirror"]
 
 [[file]]
 path = ".github/ISSUE_TEMPLATE/config.yml"
