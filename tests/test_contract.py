@@ -608,8 +608,12 @@ def test_c012_bazel_fragment_and_module(rendered):
     assert any(ln.startswith("test:deep") for ln in lines), "C-012: bazel/baseline.bazelrc needs a test:deep line"
     rc = [ln.strip() for ln in need("C-012", repo, ".bazelrc").read_text().splitlines()]
     assert "import %workspace%/bazel/baseline.bazelrc" in rc, "C-012: .bazelrc must import %workspace%/bazel/baseline.bazelrc"
-    # Contract text puts try-import in the fragment, the brief on .bazelrc; accept either file.
-    assert "try-import %workspace%/.bazelrc.user" in rc + lines, "C-012: try-import %workspace%/.bazelrc.user missing"
+    # The user rc is read last: the seeded .bazelrc ends with it, and the fragment (read before the repo's own flags) has none.
+    user_rc = "try-import %workspace%/.bazelrc.user"
+    todo = next((i for i, ln in enumerate(rc) if ln.startswith("# TODO") and "repo-specific" in ln), None)
+    assert todo is not None and rc[-1] == user_rc and rc.index(user_rc) > todo, \
+        "C-012: the seeded .bazelrc must end with try-import %workspace%/.bazelrc.user, after the repo-specific placeholder"
+    assert user_rc not in lines, "C-012: bazel/baseline.bazelrc must not import .bazelrc.user, it would be read before the repo's own flags"
     mod = need("C-012", repo, "MODULE.bazel").read_text()
     assert re.search(r'bazel_dep\(\s*name\s*=\s*"rules_ocx"\s*,\s*version\s*=\s*"\d+\.\d+\.\d+"', mod), \
         'C-012: MODULE.bazel needs bazel_dep(name = "rules_ocx", version = "X.Y.Z") with an exact version'

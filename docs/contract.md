@@ -176,8 +176,11 @@ build:ci --remote_download_regex=.*/test\.(xml|log)$
 build:ci --jobs=auto
 test:basic --test_size_filters=small,medium --test_tag_filters=-deep
 test:deep            # all sizes
-try-import %workspace%/.bazelrc.user
 ```
+
+The fragment imports no user rc, so it cannot be read ahead of the repo's own flags. The seeded `.bazelrc` ends with
+`try-import %workspace%/.bazelrc.user`; keep that line last in a repo-owned `.bazelrc`, because the setup action's trusted cache
+rc arrives through `.bazelrc.user` and is silently ignored without it.
 
 `baseline:check` requires an exact-version `bazel_dep(name = "rules_ocx", …)` in `MODULE.bazel` (or
 that the module is rules_ocx) and rejects any `http_archive`/`http_file` for a tool the ocx tool map

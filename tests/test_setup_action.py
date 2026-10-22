@@ -178,7 +178,7 @@ def test_c028_trusted_rc_equals_the_golden_and_modes_are_owner_only(tmp_path):
     assert rc.read_text() == GOLDEN_RC.read_text().replace("$RUNNER_TEMP", str(rtmp)), f"C-028 rc != golden: {rc.read_text()!r}"
     assert stat.S_IMODE(rc.stat().st_mode) == 0o600, "C-028 rc must be mode 0600"
     assert stat.S_IMODE(helper.stat().st_mode) == 0o700, "C-028 helper must be mode 0700"
-    assert (ws / ".bazelrc.user").read_text() == f"try-import {rc}\n", "C-028 baseline.bazelrc imports the rc through .bazelrc.user"
+    assert (ws / ".bazelrc.user").read_text() == f"try-import {rc}\n", "C-028 the repo's .bazelrc imports the rc through .bazelrc.user"
 
 
 def test_c028_helper_answers_with_the_credential_header(tmp_path):

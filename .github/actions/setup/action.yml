@@ -82,7 +82,7 @@ runs:
         umask 077
         rc="$RUNNER_TEMP/bazel-cache.rc"
         printf "build --remote_header='%s'\n" "$AUTH" > "$rc"
-        # baseline.bazelrc try-imports .bazelrc.user; forward slashes for Windows.
+        # The repo's .bazelrc try-imports .bazelrc.user (the seeded one, as its last line); forward slashes for Windows.
         rcpath="${rc//\\//}"
         echo "try-import $rcpath" >> "${GITHUB_WORKSPACE:-.}/.bazelrc.user"
 
