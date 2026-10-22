@@ -7,5 +7,6 @@ useDefault = true
 [allowlist]
 description = "Repo-local allowlist for gitleaks false positives"
 # The Discord user id in ocx-mirror-generated workflows is a ping target, not a credential.
+regexTarget = "line"
 regexes = ['''OCX_MIRROR_DISCORD_USER_ID: "\d+"''']
 paths = []
