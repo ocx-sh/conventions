@@ -1,0 +1,23 @@
+name: issue-watch
+
+on:
+  schedule:
+    - cron: "43 7 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Post stale-issue digest
+        env:
+          GH_TOKEN: ${{ github.token }} # public repos only; swap in the renovate app token if a private repo needs coverage
+          OCX_ISSUES_HOOK: ${{ secrets.OCX_ISSUES_HOOK }}
+        run: python3 scripts/issue_watch.py

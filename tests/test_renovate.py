@@ -352,3 +352,11 @@ def test_runner_installs_copier_and_allows_only_postupgrade_commands():
     text = WORKFLOW.read_text()
     assert any("uv tool install" in str(s.get("run", "")) and "copier" in str(s.get("run", "")) for s in all_steps(wf)), "C-016 copier must be installed in the job"
     assert "uvx" not in text.split("RENOVATE_ALLOWED_COMMANDS")[1].splitlines()[0], "C-016 allowedCommands must not carry a dead uvx entry"
+
+
+@pytest.mark.parametrize("path", [DEFAULT, MIRROR], ids=lambda p: p.stem)
+def test_copier_updates_automerge_immediately(path):
+    """Conventions bumps merge themselves behind the required basic-gate: no cooldown, no weekly window."""
+    rule = next(r for r in load(path)["packageRules"] if r.get("matchManagers") == ["copier"])
+    assert rule["automerge"] is True and rule["automergeType"] == "pr", "C-015 copier updates auto-merge as PRs"
+    assert rule["minimumReleaseAge"] == "0 days" and rule["schedule"] == ["at any time"], "C-015 copier updates skip cooldown and schedule"
