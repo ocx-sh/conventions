@@ -26,7 +26,7 @@ BASELINE_TASKS = ["setup", "hooks:install", "lock:check", "grim:check", "secrets
 ROOT_TASKS = ["verify", "ci:lint", "ci:test", "ci:build", "ci:docs", "ci:deep"]
 CLIENTS = {"claude", "codex", "opencode"}
 REF = re.compile(r"^[^:\s]+:\d+\.\d+\.\d+([-+_][\w.+-]*)?$")
-MIRROR_FLOAT = re.compile(r"^ocx\.sh/ocx/(cli|mirror):\d+\.\d+$")
+MIRROR_FLOAT = re.compile(r"^ocx\.sh/(ocx/(cli|mirror):\d+\.\d+|astral-sh/uv:\d+)$")  # toolchain minor; uv major (url_index generator runtime)
 FIX = "change ocx-sh/conventions instead, then run task copier:update"
 
 

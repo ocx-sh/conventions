@@ -1,4 +1,4 @@
-"""C-005 mirror exception: only ocx.sh/ocx/{cli,mirror} may float the minor, and only under profile mirror."""
+"""C-005 mirror exception: only ocx.sh/ocx/{cli,mirror} (minor) and astral-sh/uv (major) may float, and only under profile mirror."""
 import importlib.util
 import subprocess
 from pathlib import Path
@@ -7,7 +7,7 @@ spec = importlib.util.spec_from_file_location("bc", Path(__file__).parent.parent
 bc = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bc)
 
-TOML = '[tools]\ntask = "ocx.sh/go-task/task:3.53.1"\ncli = "ocx.sh/ocx/cli:0.6"\nother = "ocx.sh/x/y:1.2"\n'
+TOML = '[tools]\ntask = "ocx.sh/go-task/task:3.53.1"\ncli = "ocx.sh/ocx/cli:0.6"\nother = "ocx.sh/x/y:1.2"\nuv = "ocx.sh/astral-sh/uv:0"\n'
 
 
 def pins(tmp_path, mirror):
@@ -24,4 +24,4 @@ def test_mirror_floats_only_ocx_toolchain(tmp_path):
 
 
 def test_full_profile_rejects_float(tmp_path):
-    assert len(pins(tmp_path, False)) == 2
+    assert len(pins(tmp_path, False)) == 3
