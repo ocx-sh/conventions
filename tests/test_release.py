@@ -143,3 +143,63 @@ def test_workflow_missing_on_default_branch_reads_as_no_run(rel):
     assert r.returncode != 0, f"C-004 a 404 from gh run list must exit non-zero: {out}"
     assert "no verify-deep run on main yet — dispatch one" in out, f"C-004 a 404 must print the never-ran message: {out}"
     assert not (repo / "CHANGELOG.md").exists(), "C-004 refusal must not write CHANGELOG.md"
+
+
+# ---------------------------------------------------------------- C-030 repo-owned release hooks
+
+def add_tasks(repo, tasks):
+    """Define repo-owned tasks in the rendered root taskfile (the way an adopting repo defines a hook)."""
+    tf = repo / "taskfile.yml"
+    doc = yaml.safe_load(tf.read_text())
+    doc["tasks"].update(tasks)
+    tf.write_text(yaml.safe_dump(doc, sort_keys=False))
+
+
+def test_release_gate_hook_replaces_the_verify_deep_check(rel):
+    repo, log, go = rel
+    add_tasks(repo, {"release:gate": {"cmds": ["echo gated > gate.ran"]}})
+    red = json.dumps([{"conclusion": "failure", "url": RUN_URL, "event": "schedule"}])
+    r, out = go("BUMP=minor", runs_json=red, auth_rc=1)
+    assert r.returncode == 0, f"C-030 a passing release:gate replaces the verify-deep and gh checks entirely: {out}"
+    assert (repo / "gate.ran").exists(), "C-030 release:gate must run"
+    assert "gh " not in log.read_text(), f"C-030 with release:gate present release:prepare must not consult gh: {log.read_text()}"
+
+
+def test_failing_release_gate_hook_blocks_before_the_changelog(rel):
+    repo, _, go = rel
+    add_tasks(repo, {"release:gate": {"cmds": ["echo 'readiness is red' >&2", "exit 3"]}})
+    r, out = go("BUMP=minor")
+    assert r.returncode != 0 and "readiness is red" in out, f"C-030 a failing release:gate must block and show its reason: {out}"
+    assert not (repo / "CHANGELOG.md").exists() and not (repo / "verify.ran").exists(), "C-030 a blocked release writes nothing"
+
+
+def test_release_validate_hook_runs_after_git_cliff_with_the_bare_version(rel):
+    repo, _, go = rel
+    add_tasks(repo, {"release:validate": {"cmds": ['echo "{{.VERSION}} $(test -f CHANGELOG.md && echo changelog)" > validate.ran']}})
+    r, out = go("BUMP=minor")
+    assert r.returncode == 0, f"C-030 release:validate present must not break the release: {out}"
+    assert (repo / "validate.ran").read_text().strip() == "0.2.0 changelog", \
+        "C-030 release:validate must run after CHANGELOG.md is written, with VERSION=<x.y.z> (no leading v)"
+
+
+def test_failing_release_validate_hook_stops_before_verify(rel):
+    repo, _, go = rel
+    add_tasks(repo, {"release:validate": {"cmds": ["exit 4"]}})
+    r, out = go("BUMP=minor")
+    assert r.returncode != 0, f"C-030 a failing release:validate must fail release:prepare: {out}"
+    assert not (repo / "verify.ran").exists(), "C-030 verify must not run after a failed release:validate"
+
+
+def test_release_verify_hook_replaces_verify(rel):
+    repo, _, go = rel
+    add_tasks(repo, {"release:verify": {"cmds": ["echo hook > verify-hook.ran"]}})
+    r, out = go("BUMP=minor")
+    assert r.returncode == 0, f"C-030 release:verify present must succeed: {out}"
+    assert (repo / "verify-hook.ran").exists() and not (repo / "verify.ran").exists(), \
+        "C-030 release:verify replaces `verify`, it does not add to it"
+
+
+def test_release_without_hooks_is_unchanged(rel):
+    repo, _, go = rel
+    r, out = go("BUMP=minor")
+    assert r.returncode == 0 and (repo / "verify.ran").exists(), f"C-030 no hooks, the documented sequence: {out}"

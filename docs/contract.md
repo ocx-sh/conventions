@@ -14,8 +14,12 @@ template-owned file: change `ocx-sh/conventions` and run `task copier:update`.
 | `bazel` | bool, default false | full only |
 | `languages` | multiselect: bazel, cmake, dotnet, go, jvm, nix, python, rust, shell, swift, typescript | full only; unknown entry fails naming the allowed list |
 | `site` | null or `{dir, dist, deploy: bool, path?}` | full only; `path` optional, may be empty |
-| `deep_os` | subset of `ubuntu-latest, macos-latest, windows-latest`; default `[ubuntu-latest]` | full only |
+| `deep_os` | subset of `ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, macos-26, windows-latest, windows-11-arm`; default `[ubuntu-latest]` | full only |
 | `theme_bundle` | bool, default `site is not none` | full only |
+| `bazel_cache_write` | `main` (default) \| `trusted` | full with `bazel`; `trusted` makes every job that runs a `ci:*` task (lint, test, build, docs, deep) present the write secret on every event that carries it |
+| `zizmor_ignore` | list of `.github/workflows/<name>.yml`, default `[]` | full only; workflows another tool generates (cargo-dist's `release.yml`): zizmor reports nothing for them. Hand-written workflows are fixed, not listed |
+| `submodules` | bool, default false | full only; adds `submodules: recursive` to every checkout in `verify-basic` and `verify-deep`, for a repo that vendors git submodules (ocx, grimoire, ocx-mirror) |
+| `repo_workflows` | `false` (default) or `{secrets: [NAME, ...]}`; names are letters, digits, underscores, not starting with a digit or `GITHUB_` | full only; adds the `repo` job to `verify-basic` and `verify-deep` and seeds `basic-repo.yml` and `deep-repo.yml` |
 
 The template uses no `_tasks`, `_migrations` or `_jinja_extensions`: `--trust` is never needed.
 
@@ -36,7 +40,8 @@ The repo-owned root `taskfile.yml` must define `verify`, `ci:lint`, `ci:test`, `
 `ci:docs`, `ci:deep`; a missing one fails `baseline:check` naming it. `ci:test` and `ci:deep`
 write JUnit XML under `target/reports/junit/`. The `docs` job uploads whatever `ci:docs` leaves under
 `target/reports/` as the artifact `docs-reports`, also on failure; follow-up workflows read it by that name. Repo-owned optional hooks: `hooks:pre-commit`
-(called by the prek config when defined), `release:bump-files` (called by `release:prepare`).
+(called by the prek config when defined), `hooks:repo-commit-msg` (replaces the conventional-subject check),
+`release:bump-files`, `release:gate`, `release:validate`, `release:verify` (called by `release:prepare`, below).
 
 ### `release:prepare`
 
@@ -48,6 +53,15 @@ offers the menu; without one, a missing var exits non-zero with the usage line.
 - Refuses with `no verify-deep run on <branch> yet — dispatch one` when none exists.
 - Refuses when `gh` is unauthenticated.
 - Otherwise writes `CHANGELOG.md` via git-cliff `--tag v<next>` and runs `verify`. Never tags, never pushes.
+
+Optional repo-owned hooks, each detected by name in `task --list-all`:
+
+| Hook | Effect |
+|---|---|
+| `release:gate` | Replaces the verify-deep and `gh` checks above. A non-zero exit refuses the release before anything is written. |
+| `release:bump-files` | Called with `VERSION=x.y.z` before git-cliff (version files). |
+| `release:validate` | Called with `VERSION=x.y.z` after git-cliff wrote `CHANGELOG.md`; non-zero stops before `verify`. |
+| `release:verify` | Replaces `verify` as the last step. |
 
 ## `ocx.toml` and `grimoire.toml`
 
@@ -63,7 +77,9 @@ offers the menu; without one, a missing var exits non-zero with the usage line.
 `default_install_hook_types: [pre-commit, commit-msg]`. Local hooks: `gitleaks git --staged --redact`
 (pre-commit); conventional-commit subject check (commit-msg; types `feat fix docs style refactor perf
 test build ci chore revert`, optional scope, optional `!`; anything else exits 1 naming the types);
-`task hooks:pre-commit` when the repo defines it. `.gitleaks.toml` extends the defaults
+`task hooks:pre-commit` when the repo defines it. A repo-owned `hooks:repo-commit-msg` task, when defined, judges the
+commit message instead of the conventional check (it receives the message file as `{{.CLI_ARGS}}`); it is for a repo
+whose subjects that check refuses or that gates a commit on more than its subject. `.gitleaks.toml` extends the defaults
 (`useDefault = true`); add path/regex allowlists there.
 
 ## Workflows (template-owned)
@@ -80,6 +96,7 @@ All: top-level `permissions: {}`, every `uses:` a 40-hex SHA with `# vX`, checko
 | `test` | setup (`default,test`) → `task ci:test`; JUnit to job summary + check annotations (fork-safe `annotate_only`) | full |
 | `build` | setup (`default,build`) → `task ci:build`; org secrets, write credential only on a push to `main`, else the read credential | `bazel` |
 | `docs` | setup (`default,docs`) → `task ci:docs` | `site` |
+| `repo` | `uses: ./.github/workflows/basic-repo.yml` with `permissions: contents: read` and each `repo_workflows.secrets` name mapped explicitly (never `secrets: inherit`) | `repo_workflows` |
 | `basic-gate` | `if: always()`; fails unless every needed job succeeded or was skipped by answer. The single required check. | always |
 
 The mirror profile renders `lint` and `basic-gate` only.
@@ -90,11 +107,34 @@ credential only on `github.event_name == 'push' && github.ref == 'refs/heads/mai
 credential everywhere else; OTel export happens only when `OTEL_OTLP_AUTH` is non-empty, so fork PRs
 and runs without the secrets stay green. (The `renovate` and `ocx.sh` environments are separate.)
 
+With `bazel_cache_write = trusted`, `lint`, `test`, `build`, `docs` and the deep matrix instead call the setup action
+with `bazel-cache: trusted` and `cache-write-auth: ${{ secrets.BAZEL_CACHE_WRITE_AUTH }}`, no event predicate and no read
+credential (one credential per lane). The answer is the repo's statement that those jobs run no untrusted code with the
+secret; a fork PR still carries no secret, so it reads uncached. Each such job ends with an `if: always()` step that removes
+`$RUNNER_TEMP/bazel-cache-helper` and `$RUNNER_TEMP/bazel-cache.rc` (a composite action has no `post:` hook, and a self-hosted
+runner keeps `$RUNNER_TEMP` between jobs).
+
+Every checkout in `verify-basic.yml` and `verify-deep.yml` uses `persist-credentials: false`; with `submodules = true` it also uses
+`submodules: recursive`, which a repo that vendors submodules (ocx, grimoire, ocx-mirror) needs to build anything.
+
 **`verify-deep.yml`** (full) — triggers `schedule` (daily 03:MM UTC, `MM = int(sha256(repo_name)[:4], 16) % 60`),
 `workflow_dispatch`, `workflow_call`, and `pull_request: types: [labeled]` gated on label `run-deep`.
 Matrix over `deep_os`, runs `task ci:deep` (Bazel repos: `--config=ci` plus `test:deep`). A failed
 scheduled run opens or updates one issue labelled `nightly-red` (`issues: write` on that job only);
-the next green scheduled run closes it.
+the next green scheduled run closes it. With `repo_workflows` a `repo` job (same `run-deep` gate as `deep`) calls
+`./.github/workflows/deep-repo.yml` with the same secret mapping, and `nightly-red` waits for it: a red `repo`
+job reddens the night, a cancelled one leaves the issue as it is.
+
+A caller (`uses: ./.github/workflows/verify-deep.yml`) passes secrets by name, never `secrets: inherit`. `on.workflow_call.secrets`
+declares, all `required: false`, every secret the file reads: `OTEL_OTLP_AUTH`, the cache secret of the mode
+(`BAZEL_CACHE_READ_AUTH` for a Bazel repo, `BAZEL_CACHE_WRITE_AUTH` with `bazel_cache_write = trusted`, none without
+`bazel`) and each `repo_workflows.secrets` entry. The block is the whole `secrets` object, so a secret the file reads but
+does not declare would arrive empty in a called run.
+
+**`basic-repo.yml`, `deep-repo.yml`** (seeded once, only with `repo_workflows`) — `workflow_call` stubs the repo owns
+from the first render: top-level `permissions: {}`, one trivial job, and every listed secret declared under
+`on.workflow_call.secrets` (`required: false`, so a fork PR that receives no secrets still calls them). A called workflow
+sees only the secrets it declares: when the answer gains a secret, add it to both files by hand.
 
 **`claude.yml`** (full, mirror) — PR review on `pull_request` (opened, synchronize, ready_for_review) plus an
 `@claude` responder; secret `CLAUDE_CODE_OAUTH_TOKEN`. Every job skips (green) when the secret is
@@ -111,12 +151,16 @@ bypass `OrganizationAdmin` only, so the job token can never land on `main` excep
 only, environment `ocx.sh`, uses the pinned `ocx-sh/website/.github/actions/deploy` with inputs
 `dist` and optional `path` from `site`, secret `BUNNY_STORAGE_KEY`. Never runs on `pull_request`.
 
+**`.github/zizmor.yml`** (template-owned) — hash-pin policy for every `uses:`; `self-repository` off. Each `zizmor_ignore`
+entry becomes an `ignore:` line (the workflow's file name) under every audit of the pinned `ZIZMOR_VERSION`, because zizmor
+has no path exclusion. A `ZIZMOR_VERSION` bump that adds an audit must add its id to `src/.github/zizmor.yml.jinja`.
+
 ## Setup action (`.github/actions/setup`, composite)
 
 | Input | Meaning |
 |---|---|
 | `groups` | ocx groups to install, e.g. `default,lint` |
-| `bazel-cache` | `off` (default) \| `read` \| `write`; write only on `push: main` |
+| `bazel-cache` | `off` (default) \| `read` \| `write` \| `trusted`; `write` only on `push: main`, `trusted` on every event that carries `cache-write-auth` |
 | `cache-read-auth`, `cache-write-auth`, `otel-auth` | secrets passed by the caller |
 
 Installs ocx through setup-ocx (pinned SHA, baseline ocx CLI version, `groups`). When `bazel-cache`
@@ -124,6 +168,12 @@ is not `off` and the auth is non-empty it writes `$RUNNER_TEMP/bazel-cache.rc` w
 and exports the `BAZELRC` import; when `otel-auth` is non-empty it exports
 `OTEL_EXPORTER_OTLP_ENDPOINT=https://otel.ocx.sh` plus headers. Empty secrets (fork PRs) degrade to no
 cache / no telemetry and never fail. A warning-only `if: always()` post step ships test telemetry.
+
+Mode `trusted` ignores `cache-read-auth`. With `cache-write-auth` set (and a non-Windows runner) it writes, owner-only,
+`$RUNNER_TEMP/bazel-cache-helper` (mode 0700, a `/bin/sh` script that answers Bazel's credential request with the
+`<header>=<value>` pair) and `$RUNNER_TEMP/bazel-cache.rc` (mode 0600), exactly the two lines of
+[`tests/golden/trusted-cache.rc`](../tests/golden/trusted-cache.rc), and imports the rc through `.bazelrc.user`. A malformed
+credential fails the step without echoing it; an empty one writes nothing.
 
 ## Bazel fragment (`bazel/baseline.bazelrc`, when `bazel`)
 
@@ -139,8 +189,12 @@ build:ci --remote_download_regex=.*/test\.(xml|log)$
 build:ci --jobs=auto
 test:basic --test_size_filters=small,medium --test_tag_filters=-deep
 test:deep            # all sizes
-try-import %workspace%/.bazelrc.user
 ```
+
+The fragment imports no user rc, so it cannot be read ahead of the repo's own flags. The seeded `.bazelrc` ends with
+`try-import %workspace%/.bazelrc.user`; keep that line last in a repo-owned `.bazelrc`, because the setup action's trusted cache
+rc arrives through `.bazelrc.user` and is silently ignored without it. `baseline:check` fails a `.bazelrc` whose last effective
+line is anything else, so an adopter whose `.bazelrc` only imported the fragment sees it red at its next update.
 
 `baseline:check` requires an exact-version `bazel_dep(name = "rules_ocx", …)` in `MODULE.bazel` (or
 that the module is rules_ocx) and rejects any `http_archive`/`http_file` for a tool the ocx tool map

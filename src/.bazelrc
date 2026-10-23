@@ -1,5 +1,7 @@
 # Seeded once by ocx-sh/conventions; the repo owns it afterwards.
 import %workspace%/bazel/baseline.bazelrc
-try-import %workspace%/.bazelrc.user
 
 # TODO: repo-specific flags below.
+
+# Keep this last: .bazelrc.user (a developer's flags, and the setup action's trusted cache rc) overrides every line above.
+try-import %workspace%/.bazelrc.user

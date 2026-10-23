@@ -39,10 +39,12 @@ def run(cmd, cwd, env=None, check=True, timeout=900):
 
 
 def render_to(answers_name, dest, extra_data=None, src=None, vcs_ref="HEAD"):
-    """copier copy `src` (default REPO_ROOT) into dest, then commit the result. Raises CalledProcessError on copier failure."""
+    """copier copy `src` (default REPO_ROOT) into dest, then commit the result. Raises CalledProcessError on copier failure.
+
+    answers_name is a fixture name, or a Path to an answers file (tests that vary one answer write their own)."""
     src = Path(src) if src else REPO_ROOT
     dest = Path(dest)
-    answers = FIXTURES / "answers" / f"{answers_name}.yml"
+    answers = Path(answers_name) if isinstance(answers_name, Path) else FIXTURES / "answers" / f"{answers_name}.yml"
     cmd = ["uv", "run", "--project", REPO_ROOT, "copier", "copy", "--defaults", "--quiet",
            "--vcs-ref", vcs_ref, "--data-file", answers]
     for k, v in (extra_data or {}).items():

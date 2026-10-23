@@ -100,6 +100,7 @@ site = { dir = "docs", dist = "docs/dist", deploy = false }  # Astro (docs/astro
 languages = ["rust", "typescript"]
 deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
 theme_bundle = false
+submodules = true
 
 [repos.grimoire-index]
 repo = "grimoire-rs/index"
@@ -183,17 +184,21 @@ theme_bundle = false
 repo = "ocx-sh/ocx"
 path = "ocx"
 iteration = 2
-adopted = false
+adopted = true
 excluded = false
 
 [repos.ocx.answers]
 repo_name = "ocx"
 profile = "full"
 bazel = true
-site = { dir = "website", dist = "website/.vitepress/dist", deploy = true, path = "" }  # TODO verify path: deploy-website.yml targets ocx.sh (prod) / dev.ocx.sh
+site = { dir = "website", dist = "website/dist", deploy = false, path = "" }  # deploy off: deploy-docs.yml needs Rust and Bazel, so it stays repo-owned
 languages = ["rust", "bazel", "python", "shell", "typescript"]
-deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
+deep_os = ["ubuntu-latest"]  # the native macOS and Windows legs live in the repo-owned deep-repo.yml
 theme_bundle = false
+repo_workflows = { secrets = ["BAZEL_CACHE_WRITE_AUTH"] }
+submodules = true
+bazel_cache_write = "trusted"
+zizmor_ignore = [".github/workflows/release.yml"]  # cargo-dist generates and drift-checks it
 
 [repos.ocx-catalog]
 repo = "ocx-sh/catalog"
@@ -273,6 +278,7 @@ site = { dir = ".", dist = "site", deploy = false }  # mkdocs.yml at root; no de
 languages = ["rust", "bazel"]
 deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
 theme_bundle = false
+submodules = true
 
 [repos.ocx-mirror-sdk]
 repo = "ocx-sh/ocx-mirror-sdk"

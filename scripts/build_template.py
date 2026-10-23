@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 BANNER = "ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update"
 ANSWERS = ".copier-answers.yml"  # copier requires this name as {{ _copier_conf.answers_file }}; copier writes its own header
 WHEN = {None: "profile == 'full'", "bazel": "profile == 'full' and bazel", "site": "profile == 'full' and site",
-        "site.deploy": "profile == 'full' and site and site.deploy"}
+        "site.deploy": "profile == 'full' and site and site.deploy", "repo_workflows": "profile == 'full' and repo_workflows"}
 
 
 def condition(f):

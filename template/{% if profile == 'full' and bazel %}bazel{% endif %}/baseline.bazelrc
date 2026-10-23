@@ -12,5 +12,3 @@ build:ci --jobs=auto
 # basic = every PR; deep = nightly (all sizes, no tag filter).
 test:basic --test_size_filters=small,medium --test_tag_filters=-deep
 test:deep --test_size_filters=small,medium,large,enormous
-
-try-import %workspace%/.bazelrc.user

@@ -15,6 +15,8 @@ _skip_if_exists:
   - .bazelrc
   - MODULE.bazel
   - .github/renovate-local.json
+  - .github/workflows/basic-repo.yml
+  - .github/workflows/deep-repo.yml
 
 repo_name:
   type: str
@@ -117,17 +119,81 @@ deep_os:
   multiselect: true
   choices:
     - ubuntu-latest
+    - ubuntu-24.04-arm
     - macos-latest
+    - macos-15-intel
+    - macos-26
     - windows-latest
+    - windows-11-arm
   default:
     - ubuntu-latest
   when: "{{ profile == 'full' }}"
   validator: >-
-    {%- set allowed = ['ubuntu-latest', 'macos-latest', 'windows-latest'] -%}
+    {%- set allowed = ['ubuntu-latest', 'ubuntu-24.04-arm', 'macos-latest', 'macos-15-intel', 'macos-26', 'windows-latest', 'windows-11-arm'] -%}
     {%- if not deep_os -%}deep_os must list at least one OS.{{ ' ' }}{%- endif -%}
     {%- for o in deep_os if o not in allowed -%}
     Unknown deep_os '{{ o }}'; allowed: {{ allowed | join(', ') }}.{{ ' ' }}
     {%- endfor -%}
+
+bazel_cache_write:
+  type: str
+  help: >-
+    Who may write the Bazel remote cache. `main`: only a push to main, every other event reads. `trusted`: every job
+    that runs a ci:* task presents the write credential on every event that carries it (a fork PR carries none).
+  choices:
+    - main
+    - trusted
+  default: main
+  when: "{{ profile == 'full' and bazel }}"
+
+submodules:
+  type: bool
+  help: Does the repo vendor git submodules the verify jobs must check out (every verify checkout then fetches them recursively)?
+  default: false
+  when: "{{ profile == 'full' }}"
+
+repo_workflows:
+  type: yaml
+  help: >-
+    false, or a mapping {secrets: [NAME, ...]}. The repo owns .github/workflows/basic-repo.yml and deep-repo.yml, which
+    verify-basic and verify-deep call as their `repo` job; each listed secret is passed to them by name.
+  default: false
+  when: "{{ profile == 'full' }}"
+  validator: >-
+    {%- if repo_workflows is boolean -%}
+    {%- if repo_workflows -%}repo_workflows must be false or a mapping {secrets: [NAME, ...]}.{%- endif -%}
+    {%- elif repo_workflows is not mapping -%}
+    repo_workflows must be false or a mapping {secrets: [NAME, ...]}.
+    {%- else -%}
+    {%- for k in repo_workflows if k != 'secrets' -%}
+    Unknown repo_workflows key '{{ k }}'; allowed: secrets.{{ ' ' }}
+    {%- endfor -%}
+    {%- if 'secrets' not in repo_workflows -%}
+    repo_workflows.secrets is required (use [] for none).
+    {%- elif repo_workflows.secrets is string or repo_workflows.secrets is mapping or repo_workflows.secrets is not iterable -%}
+    repo_workflows.secrets must be a list of secret names.
+    {%- else -%}
+    {%- for s in repo_workflows.secrets if s is not string or not (s | regex_search('^[A-Za-z_][A-Za-z0-9_]*$')) or s.upper().startswith('GITHUB_') -%}
+    Invalid secret name '{{ s }}': letters, digits and underscores, not starting with a digit or GITHUB_.{{ ' ' }}
+    {%- endfor -%}
+    {%- endif -%}
+    {%- endif -%}
+
+zizmor_ignore:
+  type: yaml
+  help: >-
+    List of workflow paths that another tool generates (e.g. .github/workflows/release.yml from cargo-dist) and zizmor must
+    not report on. Hand-written workflows are fixed, not listed.
+  default: []
+  when: "{{ profile == 'full' }}"
+  validator: >-
+    {%- if zizmor_ignore is string or zizmor_ignore is mapping or zizmor_ignore is not iterable -%}
+    zizmor_ignore must be a list of workflow paths.
+    {%- else -%}
+    {%- for p in zizmor_ignore if p is not string or not (p | regex_search('^\.github/workflows/[A-Za-z0-9._-]+\.ya?ml$')) -%}
+    Invalid zizmor_ignore entry '{{ p }}': expected .github/workflows/<name>.yml.{{ ' ' }}
+    {%- endfor -%}
+    {%- endif -%}
 
 theme_bundle:
   type: bool

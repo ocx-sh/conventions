@@ -1,0 +1,26 @@
+{%- set repo_secrets = repo_workflows.secrets if repo_workflows else [] -%}
+# Seeded once by ocx-sh/conventions; this file belongs to the repo from here on.
+# verify-deep calls it as its `repo` job: put the repo-owned jobs that run in the nightly and labelled deep tier here.
+# A called workflow sees only the secrets it declares, so keep every secret the `repo_workflows` answer
+# lists declared under `on.workflow_call.secrets`.
+name: deep-repo
+
+on:
+  workflow_call:
+{%- if repo_secrets %}
+    secrets:
+{%- for s in repo_secrets %}
+      {{ s }}:
+        required: false
+{%- endfor %}
+{%- endif %}
+
+permissions: {}
+
+jobs:
+  repo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: echo "no repo-owned deep jobs yet"

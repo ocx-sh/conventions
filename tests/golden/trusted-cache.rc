@@ -1,0 +1,2 @@
+build --credential_helper=bazel-cache.ocx.sh=$RUNNER_TEMP/bazel-cache-helper
+build --remote_upload_local_results=true

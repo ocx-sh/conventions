@@ -1,0 +1,16 @@
+repo_name: ocx
+profile: full
+bazel: true
+site:
+  dir: website
+  dist: website/dist
+  deploy: false
+  path: ""
+languages: [rust, bazel, python, shell, typescript]
+deep_os: [ubuntu-latest]
+theme_bundle: false
+repo_workflows:
+  secrets: [BAZEL_CACHE_WRITE_AUTH]
+bazel_cache_write: trusted
+zizmor_ignore: [.github/workflows/release.yml]
+submodules: true
