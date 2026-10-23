@@ -27,6 +27,7 @@ ROOT_TASKS = ["verify", "ci:lint", "ci:test", "ci:build", "ci:docs", "ci:deep"]
 CLIENTS = {"claude", "codex", "opencode"}
 REF = re.compile(r"^[^:\s]+:\d+\.\d+\.\d+([-+_][\w.+-]*)?$")
 FIX = "change ocx-sh/conventions instead, then run task copier:update"
+USER_RC = "try-import %workspace%/.bazelrc.user"
 
 
 def load_toml(path):
@@ -185,10 +186,23 @@ def names_tool(segments, tool):
     return any(pat.fullmatch(seg) for seg in segments)
 
 
+def check_user_rc(repo, fails):
+    """C-012: the repo-owned .bazelrc ends with the user-rc import; the template-owned fragment is read first and no longer carries it."""
+    rc = repo / ".bazelrc"
+    if not rc.is_file():
+        fails.append(f"C-012: .bazelrc is missing; it imports bazel/baseline.bazelrc and ends with `{USER_RC}`")
+        return
+    lines = [ln.strip() for ln in rc.read_text(encoding="utf-8").splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
+    if not lines or lines[-1] != USER_RC:
+        fails.append(f"C-012: .bazelrc must end with `{USER_RC}`; any flag after it overrides the developer's .bazelrc.user "
+                     "and the trusted cache rc the setup action writes there")
+
+
 def check_bazel(repo, tmpl, ans, fails):
     """C-012 (D-12): rules_ocx at an exact version, no http_archive for a tool ocx already ships."""
     if not conditions(ans)["bazel"]:
         return
+    check_user_rc(repo, fails)
     mod = repo / "MODULE.bazel"
     if not mod.is_file():
         fails.append("C-012: MODULE.bazel is missing")

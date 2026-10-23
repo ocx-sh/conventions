@@ -619,6 +619,42 @@ def test_c012_bazel_fragment_and_module(rendered):
         'C-012: MODULE.bazel needs bazel_dep(name = "rules_ocx", version = "X.Y.Z") with an exact version'
 
 
+def _baseline_check(repo):
+    r = run([sys.executable, REPO_ROOT / "scripts" / "baseline_check.py", "--template", REPO_ROOT, "--repo", repo, "--commit-unresolved"],
+            repo, git_env_dict(), check=False, timeout=300)
+    return r, r.stdout + r.stderr
+
+
+USER_RC = "try-import %workspace%/.bazelrc.user"
+
+
+@pytest.mark.parametrize("label,edit", [
+    # rules_ocx at v0.1.1: `import baseline.bazelrc` and nothing else, the user rc came only from the fragment the template no longer ships it in.
+    ("no-user-rc", lambda rc: "\n".join(ln for ln in rc.splitlines() if ln != USER_RC) + "\n"),
+    # a seed from before the user rc moved last: import, user rc, then the repo's own flags that would override it.
+    ("user-rc-first", lambda rc: rc.replace(USER_RC + "\n", "").replace("import %workspace%/bazel/baseline.bazelrc\n", "import %workspace%/bazel/baseline.bazelrc\n" + USER_RC + "\n") + "build --jobs=2\n"),
+    ("user-rc-then-flag", lambda rc: rc + "build --jobs=2\n"),
+])
+def test_c012_bazelrc_not_ending_with_the_user_rc_fails_baseline_check(render, label, edit):
+    repo = render("full-bazel-site")
+    _, out = _baseline_check(repo)
+    assert "bazelrc.user" not in out, f"C-012: the seeded .bazelrc must pass the user-rc check (control)\n{out[-600:]}"
+    rc = repo / ".bazelrc"
+    before = rc.read_text()
+    rc.write_text(edit(before))
+    assert rc.read_text() != before, f"C-012: {label}: the mutation did not change .bazelrc"
+    r, out = _baseline_check(repo)
+    assert r.returncode != 0 and "C-012" in out and "bazelrc.user" in out, \
+        f"C-012: {label}: baseline:check must fail on a .bazelrc that does not end with {USER_RC} (rc={r.returncode})\n{out[-600:]}"
+
+
+def test_c012_missing_bazelrc_fails_baseline_check(render):
+    repo = render("full-bazel-site")
+    (repo / ".bazelrc").unlink()
+    r, out = _baseline_check(repo)
+    assert r.returncode != 0 and "C-012: .bazelrc is missing" in out, f"C-012: a bazel repo without .bazelrc must fail baseline:check\n{out[-600:]}"
+
+
 @pytest.mark.parametrize("name", ["full-minimal", "full-python-site", "mirror"])
 def test_c012_no_bazel_files_without_bazel(rendered, name):
     files = rendered_files(rendered(name))

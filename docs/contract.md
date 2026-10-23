@@ -185,7 +185,8 @@ test:deep            # all sizes
 
 The fragment imports no user rc, so it cannot be read ahead of the repo's own flags. The seeded `.bazelrc` ends with
 `try-import %workspace%/.bazelrc.user`; keep that line last in a repo-owned `.bazelrc`, because the setup action's trusted cache
-rc arrives through `.bazelrc.user` and is silently ignored without it.
+rc arrives through `.bazelrc.user` and is silently ignored without it. `baseline:check` fails a `.bazelrc` whose last effective
+line is anything else, so an adopter whose `.bazelrc` only imported the fragment sees it red at its next update.
 
 `baseline:check` requires an exact-version `bazel_dep(name = "rules_ocx", …)` in `MODULE.bazel` (or
 that the module is rules_ocx) and rejects any `http_archive`/`http_file` for a tool the ocx tool map
