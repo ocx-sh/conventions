@@ -1,6 +1,7 @@
 {%- set ver = ((_copier_conf.vcs_ref or '') | regex_search('^v\\d[\\w.]*(?:-[\\w.]+)?$')) or 'v0' -%}
 {%- set setup = 'ocx-sh/conventions/.github/actions/setup@' ~ _copier_conf.vcs_ref_hash ~ ' # ' ~ ver -%}
 {%- set has_bazel = bazel -%}
+{%- set has_submodules = submodules -%}
 {%- set trusted = bazel and bazel_cache_write == 'trusted' -%}
 {%- set has_repo = repo_workflows -%}
 {%- set repo_secrets = repo_workflows.secrets if has_repo else [] -%}
@@ -43,7 +44,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+{%- if has_submodules %}
           submodules: recursive
+{%- endif %}
       - uses: {{ setup }}
         with:
           groups: default,test{% if has_bazel %},build{% endif %}

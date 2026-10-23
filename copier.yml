@@ -133,6 +133,12 @@ bazel_cache_write:
   default: main
   when: "{{ profile == 'full' and bazel }}"
 
+submodules:
+  type: bool
+  help: Does the repo vendor git submodules the verify jobs must check out (every verify checkout then fetches them recursively)?
+  default: false
+  when: "{{ profile == 'full' }}"
+
 repo_workflows:
   type: yaml
   help: >-

@@ -4,6 +4,7 @@
 {%- set has_bazel = full and bazel -%}
 {%- set trusted = has_bazel and bazel_cache_write == 'trusted' -%}
 {%- set has_site = full and site -%}
+{%- set has_submodules = full and submodules -%}
 {%- set has_repo = full and repo_workflows -%}
 {%- set repo_secrets = repo_workflows.secrets if has_repo else [] -%}
 name: verify-basic
@@ -30,7 +31,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+{%- if has_submodules %}
           submodules: recursive
+{%- endif %}
           fetch-depth: 0 # `task secrets` (gitleaks git) scans the full history
       - uses: {{ setup }}
         with:
@@ -64,7 +67,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+{%- if has_submodules %}
           submodules: recursive
+{%- endif %}
       - uses: {{ setup }}
         with:
           groups: default,test
@@ -106,7 +111,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+{%- if has_submodules %}
           submodules: recursive
+{%- endif %}
       - uses: {{ setup }}
         with:
           groups: default,build
@@ -141,7 +148,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+{%- if has_submodules %}
           submodules: recursive
+{%- endif %}
       - uses: {{ setup }}
         with:
           groups: default,docs

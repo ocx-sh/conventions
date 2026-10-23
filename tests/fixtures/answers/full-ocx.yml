@@ -13,3 +13,4 @@ repo_workflows:
   secrets: [BAZEL_CACHE_WRITE_AUTH]
 bazel_cache_write: trusted
 zizmor_ignore: [.github/workflows/release.yml]
+submodules: true

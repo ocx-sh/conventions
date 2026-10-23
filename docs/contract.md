@@ -17,6 +17,7 @@ template-owned file: change `ocx-sh/conventions` and run `task copier:update`.
 | `theme_bundle` | bool, default `site is not none` | full only |
 | `bazel_cache_write` | `main` (default) \| `trusted` | full with `bazel`; `trusted` makes every job that runs a `ci:*` task (lint, test, build, docs, deep) present the write secret on every event that carries it |
 | `zizmor_ignore` | list of `.github/workflows/<name>.yml`, default `[]` | full only; workflows another tool generates (cargo-dist's `release.yml`): zizmor reports nothing for them. Hand-written workflows are fixed, not listed |
+| `submodules` | bool, default false | full only; adds `submodules: recursive` to every checkout in `verify-basic` and `verify-deep`, for a repo that vendors git submodules (ocx, grimoire, ocx-mirror) |
 | `repo_workflows` | `false` (default) or `{secrets: [NAME, ...]}`; names are letters, digits, underscores, not starting with a digit or `GITHUB_` | full only; adds the `repo` job to `verify-basic` and `verify-deep` and seeds `basic-repo.yml` and `deep-repo.yml` |
 
 The template uses no `_tasks`, `_migrations` or `_jinja_extensions`: `--trust` is never needed.
@@ -112,8 +113,8 @@ secret; a fork PR still carries no secret, so it reads uncached. Each such job e
 `$RUNNER_TEMP/bazel-cache-helper` and `$RUNNER_TEMP/bazel-cache.rc` (a composite action has no `post:` hook, and a self-hosted
 runner keeps `$RUNNER_TEMP` between jobs).
 
-Every checkout in `verify-basic.yml` and `verify-deep.yml` uses `persist-credentials: false` and `submodules: recursive` (a no-op
-without a `.gitmodules`); a repo that vendors submodules (ocx, grimoire, ocx-mirror) builds nothing without them.
+Every checkout in `verify-basic.yml` and `verify-deep.yml` uses `persist-credentials: false`; with `submodules = true` it also uses
+`submodules: recursive`, which a repo that vendors submodules (ocx, grimoire, ocx-mirror) needs to build anything.
 
 **`verify-deep.yml`** (full) — triggers `schedule` (daily 03:MM UTC, `MM = int(sha256(repo_name)[:4], 16) % 60`),
 `workflow_dispatch`, `workflow_call`, and `pull_request: types: [labeled]` gated on label `run-deep`.
