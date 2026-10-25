@@ -79,12 +79,17 @@ runs:
         set -euo pipefail
         [ -n "$AUTH" ] || exit 0
         echo "::add-mask::$AUTH"
+        # Bazel reads an rc line shell-style, so the paths below go in single quotes; a quote inside RUNNER_TEMP cannot be carried.
+        case "$RUNNER_TEMP" in *\'*)
+          echo "::error title=Bazel cache::RUNNER_TEMP contains a single quote, which a Bazel rc line cannot carry"
+          exit 1 ;;
+        esac
         umask 077
         rc="$RUNNER_TEMP/bazel-cache.rc"
         printf "build --remote_header='%s'\n" "$AUTH" > "$rc"
         # The repo's .bazelrc try-imports .bazelrc.user (the seeded one, as its last line); forward slashes for Windows.
         rcpath="${rc//\\//}"
-        echo "try-import $rcpath" >> "${GITHUB_WORKSPACE:-.}/.bazelrc.user"
+        printf "try-import '%s'\n" "$rcpath" >> "${GITHUB_WORKSPACE:-.}/.bazelrc.user"
 
     # Mode `trusted`: no event predicate, by design. A fork PR gets empty secrets, so it has no credential to write
     # and reads uncached; the step skips on the empty input rather than failing. The credential is served by a helper
@@ -112,6 +117,11 @@ runs:
           exit 1
         fi
         echo "::add-mask::$AUTH"
+        # Bazel reads an rc line shell-style, so the paths below go in single quotes; a quote inside RUNNER_TEMP cannot be carried.
+        case "$RUNNER_TEMP" in *\'*)
+          echo "::error title=Bazel cache::RUNNER_TEMP contains a single quote, which a Bazel rc line cannot carry"
+          exit 1 ;;
+        esac
         umask 077
         helper="$RUNNER_TEMP/bazel-cache-helper"
         rc="$RUNNER_TEMP/bazel-cache.rc"
@@ -124,8 +134,8 @@ runs:
           printf 'EOF\n'
         } > "$helper"
         chmod 700 "$helper"
-        printf 'build --credential_helper=bazel-cache.ocx.sh=%s\nbuild --remote_upload_local_results=true\n' "$helper" > "$rc"
-        echo "try-import $rc" >> "${GITHUB_WORKSPACE:-.}/.bazelrc.user"
+        printf "build --credential_helper=bazel-cache.ocx.sh='%s'\nbuild --remote_upload_local_results=true\n" "$helper" > "$rc"
+        printf "try-import '%s'\n" "$rc" >> "${GITHUB_WORKSPACE:-.}/.bazelrc.user"
 
     - name: Export OTLP telemetry
       if: inputs.report == '' && inputs.otel-auth != ''

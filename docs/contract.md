@@ -172,8 +172,10 @@ cache / no telemetry and never fail. A warning-only `if: always()` post step shi
 Mode `trusted` ignores `cache-read-auth`. With `cache-write-auth` set (and a non-Windows runner) it writes, owner-only,
 `$RUNNER_TEMP/bazel-cache-helper` (mode 0700, a `/bin/sh` script that answers Bazel's credential request with the
 `<header>=<value>` pair) and `$RUNNER_TEMP/bazel-cache.rc` (mode 0600), exactly the two lines of
-[`tests/golden/trusted-cache.rc`](../tests/golden/trusted-cache.rc), and imports the rc through `.bazelrc.user`. A malformed
-credential fails the step without echoing it; an empty one writes nothing.
+[`tests/golden/trusted-cache.rc`](../tests/golden/trusted-cache.rc), and imports the rc through `.bazelrc.user`. Bazel reads an
+rc line shell-style, so both paths are single-quoted (a `RUNNER_TEMP` with a space stays one token); a `RUNNER_TEMP` containing a
+single quote fails the step, as does the `read`/`write` rc step. A malformed credential fails the step without echoing it; an
+empty one writes nothing.
 
 ## Bazel fragment (`bazel/baseline.bazelrc`, when `bazel`)
 

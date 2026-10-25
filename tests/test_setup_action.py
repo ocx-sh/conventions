@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import shlex
 import stat
 import subprocess
 
@@ -100,10 +101,10 @@ def test_junit_post_step_is_non_fatal():
             "C-011 JUnit telemetry must be continue-on-error or warning-only"
 
 
-def _script_env(step, tmp_path):
+def _script_env(step, tmp_path, temp_name="runner_tmp"):
     """Run a `run:` script with every ${{ expression }} (inputs, secrets, github.*) evaluated empty."""
     env = {k: v for k, v in os.environ.items() if not k.startswith(("OTEL_", "BAZEL"))}
-    runner_tmp = tmp_path / "runner_tmp"
+    runner_tmp = tmp_path / temp_name
     runner_tmp.mkdir()
     gh_env, gh_path = tmp_path / "github_env", tmp_path / "github_path"
     gh_env.write_text("")
@@ -143,9 +144,9 @@ def trusted_step(action):
     return found[0]
 
 
-def run_trusted(tmp_path, auth, extra_env=None):
+def run_trusted(tmp_path, auth, extra_env=None, temp_name="runner_tmp"):
     step = trusted_step(load())
-    env, rtmp, _, _ = _script_env(step, tmp_path)
+    env, rtmp, _, _ = _script_env(step, tmp_path, temp_name)
     ws = tmp_path / "ws"
     ws.mkdir()
     env.update(AUTH=auth, GITHUB_WORKSPACE=str(ws), **(extra_env or {}))
@@ -178,7 +179,7 @@ def test_c028_trusted_rc_equals_the_golden_and_modes_are_owner_only(tmp_path):
     assert rc.read_text() == GOLDEN_RC.read_text().replace("$RUNNER_TEMP", str(rtmp)), f"C-028 rc != golden: {rc.read_text()!r}"
     assert stat.S_IMODE(rc.stat().st_mode) == 0o600, "C-028 rc must be mode 0600"
     assert stat.S_IMODE(helper.stat().st_mode) == 0o700, "C-028 helper must be mode 0700"
-    assert (ws / ".bazelrc.user").read_text() == f"try-import {rc}\n", "C-028 the repo's .bazelrc imports the rc through .bazelrc.user"
+    assert (ws / ".bazelrc.user").read_text() == f"try-import '{rc}'\n", "C-028 the repo's .bazelrc imports the rc through .bazelrc.user"
 
 
 def test_c028_helper_answers_with_the_credential_header(tmp_path):
@@ -212,3 +213,38 @@ def test_c028_planted_symlink_is_replaced_not_written_through(tmp_path):
     assert r.returncode == 0, r.stderr
     assert victim.read_text() == "keep", "C-028 the helper must be created fresh, never written through a planted symlink"
     assert not (rtmp / "bazel-cache-helper").is_symlink(), "C-028 the planted symlink must be replaced"
+
+
+# Bazel tokenizes an rc line shell-style, so a path with a space splits into several tokens unless it is quoted.
+
+def _tokens(path):
+    return [shlex.split(line) for line in path.read_text().splitlines()]
+
+
+def test_c028_trusted_rc_lines_survive_a_runner_temp_with_a_space(tmp_path):
+    r, rtmp, ws = run_trusted(tmp_path, AUTH, temp_name="runner tmp")
+    assert r.returncode == 0, f"C-028 trusted step must succeed on a spaced RUNNER_TEMP: {r.stderr}"
+    rc = rtmp / "bazel-cache.rc"
+    assert _tokens(rc)[0] == ["build", f"--credential_helper=bazel-cache.ocx.sh={rtmp}/bazel-cache-helper"], \
+        f"C-028 a spaced helper path must stay one rc token: {rc.read_text()!r}"
+    assert _tokens(ws / ".bazelrc.user") == [["try-import", str(rc)]], \
+        f"C-028 a spaced rc path must stay one try-import token: {(ws / '.bazelrc.user').read_text()!r}"
+
+
+def test_c028_plain_rc_import_survives_a_runner_temp_with_a_space(tmp_path):
+    step = [s for s in cache_steps(load()) if s["name"] != trusted_step(load())["name"]][0]
+    env, rtmp, _, _ = _script_env(step, tmp_path, "runner tmp")
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    env.update(AUTH="authorization=Basic x", GITHUB_WORKSPACE=str(ws))
+    r = subprocess.run(["bash", "-e", "-c", step["run"]], env=env, cwd=tmp_path, capture_output=True, text=True, timeout=30)
+    assert r.returncode == 0, f"C-011 the cache rc step must succeed on a spaced RUNNER_TEMP: {r.stderr}"
+    assert _tokens(ws / ".bazelrc.user") == [["try-import", str(rtmp / "bazel-cache.rc")]], \
+        f"C-011 a spaced rc path must stay one try-import token: {(ws / '.bazelrc.user').read_text()!r}"
+
+
+def test_c028_runner_temp_with_a_quote_is_refused_and_writes_nothing(tmp_path):
+    r, rtmp, ws = run_trusted(tmp_path, AUTH, temp_name="it's")
+    assert r.returncode != 0 and "single quote" in r.stdout + r.stderr, \
+        f"C-028 a RUNNER_TEMP no rc line can carry must fail with a clear error: {r.stdout!r} {r.stderr!r}"
+    assert not list(rtmp.iterdir()) and not (ws / ".bazelrc.user").exists(), "C-028 a refused RUNNER_TEMP must write nothing"
