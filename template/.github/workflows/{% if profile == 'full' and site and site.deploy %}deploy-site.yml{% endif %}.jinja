@@ -1,3 +1,5 @@
+{%- set deploy_path = site.get('path', '') -%}
+{%- set deploy_path = deploy_path ~ '/' if deploy_path and not deploy_path.endswith('/') else deploy_path -%}
 {%- set ver = ((_copier_conf.vcs_ref or '') | regex_search('^v\\d[\\w.]*(?:-[\\w.]+)?$')) or 'v0' -%}
 # ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update
 name: Deploy to ocx.sh
@@ -43,8 +45,8 @@ jobs:
         run: task ci:docs
       - name: Deploy
         id: deploy
-        uses: ocx-sh/website/.github/actions/deploy@1b898a76d4c3bbe60d9619a931c74f21660f4eb4 # v0.1.1
+        uses: ocx-sh/website/.github/actions/deploy@e86b83014538975c186912e5038567c69b2f2f2c # v0.3.0
         with:
           dist: "{{ site.dist }}"
-          path: "{{ site.get('path', '') }}"
+          path: "{{ deploy_path }}"
           storage-key: {% raw %}${{ secrets.BUNNY_STORAGE_KEY }}{% endraw %}
