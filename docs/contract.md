@@ -149,7 +149,7 @@ bypass `OrganizationAdmin` only, so the job token can never land on `main` excep
 
 **`deploy-site.yml`** (when `site.deploy`) — triggers `push: main` (site paths) and `workflow_dispatch`
 only, environment `ocx.sh`, uses the pinned `ocx-sh/website/.github/actions/deploy` with inputs
-`dist` and optional `path` from `site`, secret `BUNNY_STORAGE_KEY`. Never runs on `pull_request`.
+`dist` and optional `path` from `site` (a non-empty `path` is rendered with a trailing `/`, as the nav claims expect), secret `BUNNY_STORAGE_KEY`. Never runs on `pull_request`.
 
 **`.github/zizmor.yml`** (template-owned) — hash-pin policy for every `uses:`; `self-repository` off. Each `zizmor_ignore`
 entry becomes an `ignore:` line (the workflow's file name) under every audit of the pinned `ZIZMOR_VERSION`, because zizmor
