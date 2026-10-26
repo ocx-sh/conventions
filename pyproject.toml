@@ -8,7 +8,7 @@ dev = [
     "pytest==9.1.1",
     "pyyaml==6.0.3",
     "jsonschema==4.26.0",
-    "copier==9.18.2",
+    "copier==9.19.1",
 ]
 
 [tool.uv]
