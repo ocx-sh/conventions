@@ -202,6 +202,14 @@ tasks:
       vars:
         - name: BUMP
           enum: [auto, patch, minor, major]
+    # The prompt for a missing BUMP fires only after this task's `sh:` vars are evaluated,
+    # so NEXT_VERSION lives one call down, where BUMP is already answered.
+    cmds:
+      - task: release:apply
+        vars: { BUMP: '{{.BUMP}}' }
+
+  release:apply:
+    internal: true
     vars:
       NEXT_VERSION:
         sh: |
