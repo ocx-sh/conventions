@@ -3,8 +3,15 @@
 gh, git-cliff and ocx are stubs on PATH; `ocx exec -- <cmd>` execs <cmd> from PATH so the stubs win.
 `verify` in the rendered root taskfile is replaced by `echo ok`.
 """
+import fcntl
 import json
+import os
+import pty
+import select
+import struct
 import subprocess
+import termios
+import time
 
 import pytest
 import yaml
@@ -85,6 +92,7 @@ def rel(render, tmp_path):
                            capture_output=True, text=True, timeout=120)
         return r, r.stdout + r.stderr
 
+    go.env = env
     return repo, log, go
 
 
@@ -203,3 +211,40 @@ def test_release_without_hooks_is_unchanged(rel):
     repo, _, go = rel
     r, out = go("BUMP=minor")
     assert r.returncode == 0 and (repo / "verify.ran").exists(), f"C-030 no hooks, the documented sequence: {out}"
+
+
+def test_tty_prompts_for_bump_before_computing_the_version(rel):
+    """No BUMP on a TTY: the menu is answered before git-cliff --bump runs. A `sh:` var beside
+    `requires` is evaluated before the prompt, so it ran `--bump ""` and never asked."""
+    repo, log, go = rel
+    pid, fd = pty.fork()
+    if pid == 0:
+        os.chdir(repo)
+        os.execvpe("task", ["task", "--interactive", "release:prepare"], go.env)
+    fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 80, 0, 0))  # a 0x0 pty renders an empty menu
+    out, answered, t0 = b"", False, time.time()
+    while time.time() - t0 < 45:
+        ready, _, _ = select.select([fd], [], [], 0.2)
+        if ready:
+            try:
+                chunk = os.read(fd, 65536)
+            except OSError:
+                break
+            if not chunk:
+                break
+            out += chunk
+        elif not answered and b"minor" in out:
+            for key in (b"j", b"j", b"\r"):  # auto -> patch -> minor, select
+                os.write(fd, key)
+                time.sleep(0.3)
+            answered = True
+    done, status = os.waitpid(pid, os.WNOHANG)
+    if not done:
+        os.kill(pid, 9)
+        _, status = os.waitpid(pid, 0)
+    text = out.decode(errors="replace")[-800:]
+    assert answered, f"C-004 release:prepare on a TTY must prompt for BUMP: {text}"
+    assert os.waitstatus_to_exitcode(status) == 0, f"C-004 the prompted release:prepare must succeed: {text}"
+    calls = log.read_text()
+    assert '--bump ""' not in calls and "--bump minor" in calls, f"C-004 git-cliff must see the answered BUMP: {calls}"
+    assert "0.2.0" in (repo / "CHANGELOG.md").read_text(), "C-004 CHANGELOG.md must carry the answered bump"
