@@ -88,7 +88,9 @@ def rel(render, tmp_path):
         e = dict(env, **extra_env)
         if auth_rc is not None:
             e["GH_AUTH_RC"] = str(auth_rc)
-        r = subprocess.run(["task", "release:prepare", *args], cwd=repo, env=e, stdin=subprocess.DEVNULL,
+        flags = [a for a in args if a.startswith("--")]
+        args = [a for a in args if not a.startswith("--")]
+        r = subprocess.run(["task", *flags, "release:prepare", *args], cwd=repo, env=e, stdin=subprocess.DEVNULL,
                            capture_output=True, text=True, timeout=120)
         return r, r.stdout + r.stderr
 
@@ -248,3 +250,13 @@ def test_tty_prompts_for_bump_before_computing_the_version(rel):
     calls = log.read_text()
     assert '--bump ""' not in calls and "--bump minor" in calls, f"C-004 git-cliff must see the answered BUMP: {calls}"
     assert "0.2.0" in (repo / "CHANGELOG.md").read_text(), "C-004 CHANGELOG.md must carry the answered bump"
+
+
+def test_force_skips_the_red_gate(rel):
+    repo, log, go = rel
+    bad = json.dumps([{"conclusion": "failure", "url": RUN_URL, "event": "schedule"}])
+    r, out = go("--force", "BUMP=minor", runs_json=bad)
+    assert r.returncode == 0, f"C-004 task --force release:prepare must skip a red gate: {out}"
+    assert "verify-deep gate skipped" in out, f"C-004 a skipped gate must say so: {out}"
+    assert "gh run list" not in log.read_text(), "C-004 --force must not consult the verify-deep history"
+    assert "0.2.0" in (repo / "CHANGELOG.md").read_text(), "C-004 the forced prepare must still write CHANGELOG.md"

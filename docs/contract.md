@@ -52,13 +52,14 @@ offers the menu; without one, a missing var exits non-zero with the usage line.
   branch (event `schedule` or `workflow_dispatch`) is not `success`.
 - Refuses with `no verify-deep run on <branch> yet — dispatch one` when none exists.
 - Refuses when `gh` is unauthenticated.
+- `task --force release:prepare` skips these checks (it says so on stderr) and passes `--force` to a `release:gate` hook.
 - Otherwise writes `CHANGELOG.md` via git-cliff `--tag v<next>` and runs `verify`. Never tags, never pushes.
 
 Optional repo-owned hooks, each detected by name in `task --list-all`:
 
 | Hook | Effect |
 |---|---|
-| `release:gate` | Replaces the verify-deep and `gh` checks above. A non-zero exit refuses the release before anything is written. |
+| `release:gate` | Replaces the verify-deep and `gh` checks above. A non-zero exit refuses the release before anything is written. Called with `--force` under `task --force`; the hook decides what that skips. |
 | `release:bump-files` | Called with `VERSION=x.y.z` before git-cliff (version files). |
 | `release:validate` | Called with `VERSION=x.y.z` after git-cliff wrote `CHANGELOG.md`; non-zero stops before `verify`. |
 | `release:verify` | Replaces `verify` as the last step. |
