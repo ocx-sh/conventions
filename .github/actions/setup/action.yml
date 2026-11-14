@@ -54,7 +54,7 @@ runs:
       # v1.4.0
       uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e
       with:
-        version: 0.6.5
+        version: 0.6.6
         groups: ${{ inputs.groups }}
 
     # Secrets reach the script through env:, never interpolated into run:.
