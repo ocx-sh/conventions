@@ -96,7 +96,7 @@ excluded = false
 repo_name = "devcontainer-features"
 profile = "full"
 bazel = false
-site = { dir = "site", dist = "site/dist", deploy = true, path = "/integrations/devcontainer", paths = ["src/**", "test/**"] }  # Astro base /integrations/devcontainer/
+site = { dir = "site", dist = "site/dist", deploy = true, path = "/integrations/devcontainer" }  # Astro base /integrations/devcontainer/
 languages = ["shell", "typescript"]
 deep_os = ["ubuntu-latest", "ubuntu-24.04-arm"]
 theme_bundle = true
