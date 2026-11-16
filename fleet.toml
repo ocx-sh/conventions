@@ -85,6 +85,22 @@ languages = ["cmake", "typescript"]
 deep_os = ["ubuntu-latest", "macos-latest", "windows-latest"]
 theme_bundle = false
 
+[repos.devcontainer-features]
+repo = "ocx-sh/devcontainer-features"
+path = "devcontainer-features"
+iteration = 2
+adopted = false
+excluded = false
+
+[repos.devcontainer-features.answers]
+repo_name = "devcontainer-features"
+profile = "full"
+bazel = false
+site = { dir = "site", dist = "site/dist", deploy = true, path = "/integrations/devcontainer", paths = ["src/**", "test/**"] }  # Astro base /integrations/devcontainer/
+languages = ["shell", "typescript"]
+deep_os = ["ubuntu-latest", "ubuntu-24.04-arm"]
+theme_bundle = true
+
 [repos.grimoire]
 repo = "grimoire-rs/grimoire"
 path = "grimoire"
