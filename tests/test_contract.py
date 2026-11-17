@@ -484,8 +484,8 @@ def test_c014_deploy_site_iff_site_deploy(rendered, name):
     if a["site"].get("path"):
         want_path = a["site"]["path"].rstrip("/") + "/"
         assert f'path: "{want_path}"' in raw, f"C-014: deploy path must be site.path with a trailing slash ({want_path})"
-    assert "ocx-sh/website/.github/actions/deploy@e86b83014538975c186912e5038567c69b2f2f2c # v0.3.0" in raw, \
-        "C-014: deploy action must be pinned at ocx-sh/website v0.3.0 (the first release that accepts a /learn/ header link)"
+    assert "ocx-sh/website/.github/actions/deploy@37ada9d815fba073a3cb50e31c8b1af6e43258e5 # v0.7.0" in raw, \
+        "C-014: deploy action must be pinned at ocx-sh/website v0.7.0 (its nav.json carries every claim of the fleet, including /integrations/devcontainer/)"
     assert "BUNNY_STORAGE_KEY" in raw, "C-014: deploy must pass secrets.BUNNY_STORAGE_KEY"
     want = [f"{a['site']['dir']}/**", "ocx.toml", "ocx.lock", *a["site"].get("paths", [])]
     assert trig["push"].get("paths") == want, f"C-014: deploy-site push paths {trig['push'].get('paths')} != {want}"

@@ -44,7 +44,7 @@ jobs:
         run: task ci:docs
       - name: Deploy
         id: deploy
-        uses: ocx-sh/website/.github/actions/deploy@e86b83014538975c186912e5038567c69b2f2f2c # v0.3.0
+        uses: ocx-sh/website/.github/actions/deploy@37ada9d815fba073a3cb50e31c8b1af6e43258e5 # v0.7.0
         with:
           dist: "{{ site.dist }}"
           path: "{{ deploy_path }}"
