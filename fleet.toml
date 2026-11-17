@@ -89,7 +89,7 @@ theme_bundle = false
 repo = "ocx-sh/devcontainer-features"
 path = "devcontainer-features"
 iteration = 2
-adopted = false
+adopted = true
 excluded = false
 
 [repos.devcontainer-features.answers]
